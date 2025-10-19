@@ -1,4 +1,5 @@
 class CSP:
+    # problem structure
     def __init__(self, variables, domains, constraints):
         self.variables = variables  # list like ["X", "Y", "Z"]
         self.domains = domains      # dict: {var: [possible_values]}

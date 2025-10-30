@@ -16,26 +16,29 @@ class CSP:
                     return False
         return True
     
-def backtrack(assignment, csp):
+
+def backtrack(assignment, csp, MRV_variables, index, n):
     if len(assignment) == len(csp.variables):
         return assignment
 
-    for var in csp.variables:
+    for i in range(index, n):
+        var = MRV_variables[i]
         if var not in assignment:
             for value in csp.domains[var]:
                 if csp.is_consistent(var, value, assignment):
                     assignment[var] = value
-                    result = backtrack(assignment, csp)
+                    result = backtrack(assignment, csp, MRV_variables, index+1, n)
                     if result:
                         return result
                     del assignment[var]
     return None
+            
 
 
 #cases: list of dicts [{"name": case, "time": time, "senority": senority, "location": location, "duration": duration}, ...]
 #barristers: list of dicst [{"name": barrister, "schedule": [dict{start_time, end_time, location}, ...], "senority": senority}, ...]
-travel_times = {} #{(start, end): hours, ...}
-def define_inputs(cases, barristers):
+#travel_times: {(start, end): hours, ...}
+def define_inputs(cases, barristers, travel_times):
     n = len(cases)
     cases.sort(key=lambda x: x["time"])
 
@@ -95,33 +98,3 @@ def define_inputs(cases, barristers):
                             constraints[(name2, name1)].add((barrister2, barrister1))
 
     return variables, domains, constraints
-
-cases = [
-    {"name": "CaseA", "time": 10.0, "senority": 2, "location": "Court1", "duration": 1.0},
-    {"name": "CaseB", "time": 13.0, "senority": 1, "location": "Court2", "duration": 1.0},
-]
-
-barristers = [
-    {"name": "Alice", "senority": 2, "schedule": []},
-    {"name": "Bob", "senority": 1, "schedule": []},
-]
-
-travel_times = {
-    ("Court1", "Court2"): 1.0, ("Court2", "Court1"): 1.0
-}
-
-variables, domains, constraints = define_inputs(cases, barristers)
-print(domains)
-print(constraints)
-csp = CSP(variables, domains, constraints)
-result = backtrack({}, csp)
-print(result)
-
-    
-
-            
-
-
-
-
-

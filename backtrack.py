@@ -4,6 +4,9 @@ class CSP:
         self.variables = variables  # list like ["X", "Y", "Z"]
         self.domains = domains      # dict: {var: [possible_values]}
         self.constraints = constraints  # dict: { (X, Y): constraint_set }
+        self.neighbours = {v: set() for v in variables}
+        for (x, y) in constraints:
+            self.neighbours[x].add(y)
 
     def is_consistent(self, var, value, assignment):
         # Check that assigning var=value doesn’t violate any constraints
@@ -16,21 +19,50 @@ class CSP:
                     return False
         return True
     
+    def is_consistent(self, var, value, assignment):
+        for neighbour in self.neighbours[var]:
+            if neighbour in assignment:
+                allowed = self.constraints.get((var, neighbour))
+                if allowed and (value, assignment[neighbour]) not in allowed:
+                    return False
+        return True
 
-def backtrack(assignment, csp, MRV_variables, index, n):
+def forward_check(csp, var, value, assignment):
+    removed = {}
+    for (x, y), allowed in csp.constraints.items():
+        if x == var and y not in assignment:
+            removed[y] = []
+            if value in csp.domains[y]:
+                csp.domains[y].remove(value)
+                removed[y].append(value)
+            if not csp.domains[y]:  # dead-end
+                return False, removed
+    return True, removed
+
+def backtrack(assignment, csp):
     if len(assignment) == len(csp.variables):
         return assignment
+    
+    # MRV variable
+    unassigned = [v for v in csp.variables if v not in assignment]
+    var = min(unassigned, key=lambda v: len(csp.domains[v]))
 
-    for i in range(index, n):
-        var = MRV_variables[i]
-        if var not in assignment:
-            for value in csp.domains[var]:
-                if csp.is_consistent(var, value, assignment):
-                    assignment[var] = value
-                    result = backtrack(assignment, csp, MRV_variables, index+1, n)
-                    if result:
-                        return result
-                    del assignment[var]
+    for value in csp.domains[var]:
+        if csp.is_consistent(var, value, assignment):
+            assignment[var] = value
+
+            ok, removed = forward_check(csp, var, value, assignment)
+            if ok:
+                result = backtrack(assignment, csp)
+                if result:
+                    return result
+                
+            # Restore domains
+            for y, vals in removed.items():
+                csp.domains[y].extend(vals)
+
+            del assignment[var]
+                 
     return None
             
 
@@ -88,7 +120,7 @@ def define_inputs(cases, barristers, travel_times):
             name1 = case1["name"]
             name2 = case2["name"]
             if (case2["time"] - case1["time"]) < (travel_times[(case1["location"], case2["location"])] + case1["duration"]): #if cases are too close together considering travel and case time
-                #add constraint, case1 and case2 cannot have same barrister
+                # add constraint, case1 and case2 cannot have same barrister
                 constraints[(name1, name2)] = set()
                 constraints[(name2, name1)] = set()
                 for barrister1 in domains[name1]:
@@ -98,3 +130,13 @@ def define_inputs(cases, barristers, travel_times):
                             constraints[(name2, name1)].add((barrister2, barrister1))
 
     return variables, domains, constraints
+
+#categories of cases
+#experience
+#winrate of cases
+#fake barrister profiles
+#public info fenners chambers
+#suggest new experience
+#design barrister profile, add to data struct
+#visualise schedule / simple UI - library to show schedule table
+#metrics to evaluate quality, scoring mechanism

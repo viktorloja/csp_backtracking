@@ -1,17 +1,13 @@
 from backtrack import CSP
 from backtrack import backtrack
 from backtrack import define_inputs
-
-
 import random
 
 def generate_consistent_test(num_cases=1000, num_barristers=1000, num_locations=5):
     random.seed(42)
 
-    # --- Define locations ---
     locations = [f"Court{i}" for i in range(1, num_locations + 1)]
 
-    # --- Generate realistic travel times ---
     travel_times = {}
     for loc1 in locations:
         for loc2 in locations:
@@ -20,11 +16,9 @@ def generate_consistent_test(num_cases=1000, num_barristers=1000, num_locations=
             else:
                 travel_times[(loc1, loc2)] = round(random.uniform(0.3, 1.5), 1)
 
-    # --- Generate barristers ---
     barristers = []
     for i in range(num_barristers):
         seniority = random.randint(1, 3)
-        # Fewer schedule blocks -> more availability -> easier to solve
         num_blocks = random.randint(0, 1)
         schedule = []
         for _ in range(num_blocks):
@@ -43,7 +37,6 @@ def generate_consistent_test(num_cases=1000, num_barristers=1000, num_locations=
             "schedule": schedule
         })
 
-    # --- Generate cases ---
     cases = []
     time = 9.0
     for i in range(num_cases):
@@ -56,13 +49,11 @@ def generate_consistent_test(num_cases=1000, num_barristers=1000, num_locations=
             "duration": duration,
         }
         cases.append(case)
-        # Slightly stagger start times to reduce conflicts
         time += random.uniform(1.5, 2.5)
 
     return cases, barristers, travel_times
 
 
-# --- Example usage ---
 cases, barristers, travel_times = generate_consistent_test()
 
 
@@ -136,20 +127,17 @@ travel_times = {
 }
 
 cases = []
-# 45 cases, overlapping times
-for i in range(45):
+for i in range(19):
     cases.append({
         "name": f"Case{i+1}",
-        "time": 9.0 + (i * 0.3),  # overlapping start times
-        "senority": (i % 3) + 1,  # senority 1–3
-        "location": f"Court{(i % 5) + 1}",  # 5 courts
+        "time": 9.0 + (i * 0.3),  
+        "senority": (i % 3) + 1,  
+        "location": f"Court{(i % 5) + 1}",  
         "duration": 1.0
     })
 
 barristers = []
-# 10 barristers with limited availability
-for i in range(10):
-    # Each barrister has 1–3 unavailable blocks
+for i in range(50):
     schedule = []
     for j in range((i % 3) + 1):
         start = 9.0 + j * 3.0
@@ -164,12 +152,11 @@ for i in range(10):
 
 travel_times = {}
 courts = [f"Court{i}" for i in range(1, 6)]
-# travel times between courts: 0.5–1.5 hours
 for c1 in courts:
     for c2 in courts:
         travel_times[(c1, c2)] = 0.5 + abs(int(c1[-1]) - int(c2[-1])) * 0.25
 
-# Plug into your existing CSP pipeline:
+
 variables, domains, constraints = define_inputs(cases, barristers, travel_times)
 csp = CSP(variables, domains, constraints)
 
@@ -178,8 +165,8 @@ tracemalloc.start()
 start_time = time.time()
 
 print("running")
-MRV_variables = sorted(csp.variables, key=lambda var: len(csp.domains[var]))
-result = backtrack({}, csp, MRV_variables, 0, len(MRV_variables))
+#MRV_variables = sorted(csp.variables, key=lambda var: len(csp.domains[var]))
+result = backtrack({}, csp)
 print("done")
 
 end_time = time.time()
@@ -189,3 +176,4 @@ tracemalloc.stop()
 print(f"\nRuntime: {end_time - start_time:.4f} seconds")
 print(f"Peak memory: {peak / 10**6:.2f} MB")
 print(f"\nSolution: {result}")
+

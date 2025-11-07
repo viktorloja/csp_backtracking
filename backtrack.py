@@ -1,12 +1,15 @@
+from math import inf
+
 class CSP:
     # problem structure
-    def __init__(self, variables, domains, constraints):
+    def __init__(self, variables, domains, constraints, costs):
         self.variables = variables  # list like ["X", "Y", "Z"]
         self.domains = domains      # dict: {var: [possible_values]}
         self.constraints = constraints  # dict: { (X, Y): constraint_set }
         self.neighbours = {v: set() for v in variables}
         for (x, y) in constraints:
             self.neighbours[x].add(y)
+        self.costs = costs # dict of dicts : { X: {var: cost } }
 
     def is_consistent(self, var, value, assignment):
         # Check that assigning var=value doesn’t violate any constraints
@@ -27,17 +30,85 @@ class CSP:
                     return False
         return True
 
+def heuristic_lower_bound(remaining_cases, csp):
+    """
+    Compute a simple optimistic bound on minimal possible extra cost.
+    For each unassigned case, assume we can pick its *cheapest feasible* barrister.
+    (This gives a lower bound on how cheap completion could be.)
+    """
+    bound = 0
+    for case in remaining_cases:
+        barrister_costs = csp.costs[case]
+        current = inf
+        for barrister in csp.domains[case]:
+            current = min(barrister_costs[barrister], current)
+
+
+
+        feasible_costs = [cost[c][b] for b in barristers if feasible[c][b]]
+        if feasible_costs:
+            bound += min(feasible_costs)
+        else:
+            # No feasible barrister → must treat as very high cost
+            bound += 1000
+        barrister_costs = csp.costs[case]
+    return bound
+
 def forward_check(csp, var, value, assignment):
-    removed = {}
+    removed = set()
     for (x, y), allowed in csp.constraints.items():
         if x == var and y not in assignment:
-            removed[y] = []
             if value in csp.domains[y]:
                 csp.domains[y].remove(value)
-                removed[y].append(value)
+                removed.add(y)
             if not csp.domains[y]:  # dead-end
                 return False, removed
     return True, removed
+
+
+best_solution = None
+best_cost = inf
+step_counter = 0
+
+def branch_and_bound(assignment, remaining_cases, current_cost, csp):
+    
+    global best_solution, best_cost, step_counter
+
+    step_counter += 1
+
+    # Base case: all cases assigned
+    if not remaining_cases:
+        if current_cost < best_cost:
+            best_cost = current_cost
+            best_solution = assignment.copy()
+            print(f"New best solution found: {assignment}, cost={best_cost}")
+        return
+
+    # Compute lower bound for this partial assignment
+    bound = current_cost + heuristic_lower_bound(remaining_cases, csp)
+    if bound >= best_cost:
+        # Prune this branch (no better solution possible)
+        print(f"Pruned branch: cost={current_cost}, bound={bound}, best={best_cost}")
+        return
+
+    # Choose next case to assign, MRV variable
+    case = min(remaining_cases, key=lambda v: len(csp.domains[v]))
+
+
+    # Try all feasible barristers
+    for barrister in csp.domains[case]:
+        new_cost = current_cost + cost_of_assignment(case, barrister)
+        assignment[case] = barrister
+        ok, removed = forward_check(csp, case, barrister, assignment)
+        if ok:
+            branch_and_bound(assignment, remaining_cases - {case}, new_cost)
+            
+        # Restore domains
+        for y, vals in removed.items():
+            csp.domains[y].extend(vals)
+
+        del assignment[case]  # backtrack
+
 
 def backtrack(assignment, csp):
     if len(assignment) == len(csp.variables):

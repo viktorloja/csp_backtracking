@@ -11,59 +11,32 @@ class CSP:
             self.neighbours[x].add(y)
         self.costs = costs # dict of dicts : { X: {var: cost } }
 
-    def is_consistent(self, var, value, assignment):
-        # Check that assigning var=value doesn’t violate any constraints
-        for (x, y), allowed_pairs in self.constraints.items():
-            if x == var and y in assignment:
-                if (value, assignment[y]) not in allowed_pairs:
-                    return False
-            if y == var and x in assignment:
-                if (assignment[x], value) not in allowed_pairs:
-                    return False
-        return True
-    
-    def is_consistent(self, var, value, assignment):
-        for neighbour in self.neighbours[var]:
-            if neighbour in assignment:
-                allowed = self.constraints.get((var, neighbour))
-                if allowed and (value, assignment[neighbour]) not in allowed:
-                    return False
-        return True
 
 def heuristic_lower_bound(remaining_cases, csp):
-    """
-    Compute a simple optimistic bound on minimal possible extra cost.
-    For each unassigned case, assume we can pick its *cheapest feasible* barrister.
-    (This gives a lower bound on how cheap completion could be.)
-    """
+  
     bound = 0
     for case in remaining_cases:
         barrister_costs = csp.costs[case]
-        current = inf
+        current = 1000
         for barrister in csp.domains[case]:
             current = min(barrister_costs[barrister], current)
-
-
-
-        feasible_costs = [cost[c][b] for b in barristers if feasible[c][b]]
-        if feasible_costs:
-            bound += min(feasible_costs)
-        else:
-            # No feasible barrister → must treat as very high cost
-            bound += 1000
-        barrister_costs = csp.costs[case]
+        bound += current
     return bound
+
 
 def forward_check(csp, var, value, assignment):
     removed = set()
-    for (x, y), allowed in csp.constraints.items():
+    nones = set()
+    cost = 0
+    for (x, y) in csp.constraints:
         if x == var and y not in assignment:
             if value in csp.domains[y]:
                 csp.domains[y].remove(value)
                 removed.add(y)
             if not csp.domains[y]:  # dead-end
-                return False, removed
-    return True, removed
+                cost += 1000
+                nones.add(y)
+    return nones, cost, removed
 
 
 best_solution = None
@@ -97,49 +70,19 @@ def branch_and_bound(assignment, remaining_cases, current_cost, csp):
 
     # Try all feasible barristers
     for barrister in csp.domains[case]:
-        new_cost = current_cost + cost_of_assignment(case, barrister)
+        new_cost = current_cost + csp.costs[case][barrister]
         assignment[case] = barrister
-        ok, removed = forward_check(csp, case, barrister, assignment)
-        if ok:
-            branch_and_bound(assignment, remaining_cases - {case}, new_cost)
+        nones, cost, removed = forward_check(csp, case, barrister, assignment)
+        branch_and_bound(assignment, remaining_cases - set([case]) - nones, new_cost+cost, csp)
             
         # Restore domains
-        for y, vals in removed.items():
-            csp.domains[y].extend(vals)
+        for y in removed:
+            csp.domains[y].append(barrister)
 
         del assignment[case]  # backtrack
 
-
-def backtrack(assignment, csp):
-    if len(assignment) == len(csp.variables):
-        return assignment
-    
-    # MRV variable
-    unassigned = [v for v in csp.variables if v not in assignment]
-    var = min(unassigned, key=lambda v: len(csp.domains[v]))
-
-    for value in csp.domains[var]:
-        if csp.is_consistent(var, value, assignment):
-            assignment[var] = value
-
-            ok, removed = forward_check(csp, var, value, assignment)
-            if ok:
-                result = backtrack(assignment, csp)
-                if result:
-                    return result
-                
-            # Restore domains
-            for y, vals in removed.items():
-                csp.domains[y].extend(vals)
-
-            del assignment[var]
-                 
-    return None
-            
-
-
 #cases: list of dicts [{"name": case, "time": time, "senority": senority, "location": location, "duration": duration}, ...]
-#barristers: list of dicst [{"name": barrister, "schedule": [dict{start_time, end_time, location}, ...], "senority": senority}, ...]
+#barristers: list of dicst [{"name": barrister, "schedule": [dict{start_time, end_time, location}, ...], "senority": senority, "home": home_location}, ...]
 #travel_times: {(start, end): hours, ...}
 def define_inputs(cases, barristers, travel_times):
     n = len(cases)
@@ -202,12 +145,21 @@ def define_inputs(cases, barristers, travel_times):
 
     return variables, domains, constraints
 
+#optimization (cost) 
 #categories of cases
 #experience
 #winrate of cases
-#fake barrister profiles
+#fake barrister profiles - NLP to extract, consult chambers with fake profiles, generate fake profiles/history
 #public info fenners chambers
 #suggest new experience
 #design barrister profile, add to data struct
 #visualise schedule / simple UI - library to show schedule table
 #metrics to evaluate quality, scoring mechanism
+#ortools (library)
+#evaluation - human participants? - ethics committee
+#machine learning for scoring?
+
+
+#completed: OR-tools
+#parent function for OR-tools / backtrack
+#evaluation function, gini coefficient

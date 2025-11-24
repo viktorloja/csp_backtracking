@@ -77,8 +77,74 @@ costs = {
     "Case6": {"Alice": 7, "Bob": 6, "Charlie": 9, "Dana": 5},
 }
 
+import hashlib
+
+# ----------------------------
+# Deterministic cost function
+# ----------------------------
+def deterministic_cost(case_name, barr_name):
+    h = int(hashlib.sha256((case_name + barr_name).encode()).hexdigest(), 16)
+    return (h % 10) + 1  # cost between 1–10
+
+# ----------------------------
+# Barristers
+# ----------------------------
+barristers = [
+    {"name": f"Barr{i}", "senority": (i % 3) + 1, "home": f"Loc{(i%5)+1}", "schedule": []}
+    for i in range(8)
+]
+
+# ----------------------------
+# Cases (50 cases, spaced 15–30 mins apart)
+# ----------------------------
+cases = []
+for i in range(50):
+    case = {
+        "name": f"Case{i}",
+        "time": 9*60 + i*15,  # start at 9:00am, every 15 mins
+        "duration": 30 + (i % 3) * 5,  # 30–40 mins
+        "location": f"Loc{(i % 5) + 1}",  # cycles through 5 locations
+        "senority": (i % 3) + 1  # 1,2,3 cycling
+    }
+    cases.append(case)
+
+# ----------------------------
+# Travel times between 5 locations (symmetric)
+# ----------------------------
+travel_times = {}
+locations = [f"Loc{i}" for i in range(1,6)]
+for loc1 in locations:
+    for loc2 in locations:
+        if loc1 == loc2:
+            travel_times[(loc1, loc2)] = 0
+        else:
+            # deterministic "random" travel 10–60 mins
+            travel_times[(loc1, loc2)] = 10 + (abs(ord(loc1[-1])-ord(loc2[-1]))*10)
+            travel_times[(loc2, loc1)] = travel_times[(loc1, loc2)]
+
+# ----------------------------
+# Case costs
+# ----------------------------
+case_costs = {}
+for case in cases:
+    case_costs[case["name"]] = {}
+    for barr in barristers:
+        if barr["senority"] < case["senority"]:
+            cost = 10**6  # prohibit infeasible seniority
+        else:
+            cost = deterministic_cost(case["name"], barr["name"])
+        case_costs[case["name"]][barr["name"]] = cost
+
+# ----------------------------
+# Notes:
+# - Feasibility guaranteed: multiple barristers can cover each case.
+# - Travel distances and durations create overlaps, forcing OR-Tools to make scheduling decisions.
+# - Deterministic costs ensure reproducible results.
+# ----------------------------
+
+
 variables, domains, constraints = define_inputs(cases, barristers, travel_times)
-csp = CSP(variables, domains, constraints, costs)
+csp = CSP(variables, domains, constraints, case_costs)
 
 import time, tracemalloc
 tracemalloc.start()
@@ -98,6 +164,8 @@ print(f"Peak memory: {peak / 10**6:.2f} MB")
 #print(f"\nSolution: {result}")
 #print(best_solution)
 
+
+"""
 def evaluate():
     cases.sort(key=lambda x: x["time"])
     scores = {}
@@ -108,15 +176,83 @@ def evaluate():
         locations[name] = barrister["home"]
 
     for case in cases:
-        barrister = best_solution[case]
-        scores[barrister] += (case["duration"] + travel_times[(locations[barrister], case["location"])])
-        locations[barrister] = case["location"]
+        if case in best_solution:
+            barrister = best_solution[case] 
+            scores[barrister] += (case["duration"] + travel_times[(locations[barrister], case["location"])])
+            locations[barrister] = case["location"]
 
     for barrister in barristers:
         name = barrister["name"]
         scores[name] += travel_times[(locations[name], barrister["home"])]
 
+    total_1= 0
+    total_2 = 0
+    total_sqr = 0
+    n = 0
+    for score1 in scores.values():
+        n += 1
+        total_1 += score1
+        total_sqr += (score1**2)
+        for score2 in scores.values():
+            total_2 += abs(score1-score2)
+    
+    gini = total_1 / (2 * n * total_2)
+    jain = total_1**2 / (n * total_sqr)
+
+    return gini, jain
 
 
+def solve_cases(cases, barristers, travel_times,
+                assignment_fixed=None,
+                method="ortools",
+                **kwargs):
+
+    Solve the case assignment problem using the chosen method.
+    
+    method options:
+        - "ortools"
+        - "backtracking"
+    
+    output = {}
+
+    if method == "ortools":
+        tracemalloc.start()
+        start_time = time.time()
+        result = solve_cases_ortools(cases, case_costs, barristers, travel_times,
+                                   assignment_fixed=assignment_fixed,
+                                   **kwargs)
         
-    return
+        end_time = time.time()
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+
+        output["result"] = result
+        output["runtime"] = end_time - start_time
+        output["memory"] = peak / 10**6
+
+    elif method == "backtracking":
+
+        variables, domains, constraints = define_inputs(cases, barristers, travel_times)
+        csp = CSP(variables, domains, constraints, costs)
+        branch_and_bound({}, set(variables), 0, csp)
+
+        tracemalloc.start()
+        start_time = time.time()
+        result = solve_cases_backtracking(cases, case_costs, barristers, travel_times,
+                                        assignment_fixed=assignment_fixed,
+                                        **kwargs)
+        
+        end_time = time.time()
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+
+        output["result"] = result
+        output["runtime"] = end_time - start_time
+        output["memory"] = peak / 10**6
+
+
+    else:
+        raise ValueError(f"Unknown method: {method}")
+
+    return result
+"""

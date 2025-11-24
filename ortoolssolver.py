@@ -1,9 +1,8 @@
 from ortools.sat.python import cp_model
 
-def solve_cases_min_travel(cases, barristers, travel_times, assignment_fixed=None, max_time_seconds=30):
+def solve_cases_min_travel(cases, case_costs, barristers, travel_times, assignment_fixed=None, max_time_seconds=30):
     # ----- Preprocess & indexing -----
-    cases_sorted = sorted(cases, key=lambda c: c["time"])
-    n = len(cases_sorted)
+    n = len(cases)
 
     barrister_names = [b["name"] for b in barristers]
 
@@ -11,7 +10,7 @@ def solve_cases_min_travel(cases, barristers, travel_times, assignment_fixed=Non
 
     # ----- Feasible assign variables only -----
     assign = {}
-    for i, case in enumerate(cases_sorted):
+    for i, case in enumerate(cases):
         cstart = case["time"]
         cend = cstart + case["duration"]
         for b in barristers:
@@ -38,7 +37,7 @@ def solve_cases_min_travel(cases, barristers, travel_times, assignment_fixed=Non
     # ----- Partial fixed assignments -----
     if assignment_fixed:
         for cname, bname in assignment_fixed.items():
-            i = next(idx for idx,c in enumerate(cases_sorted) if c["name"]==cname)
+            i = next(idx for idx,c in enumerate(cases) if c["name"]==cname)
             if (i, bname) in assign:
                 model.Add(assign[(i,bname)] == 1)
             for key in list(assign):
@@ -47,10 +46,10 @@ def solve_cases_min_travel(cases, barristers, travel_times, assignment_fixed=Non
 
     # ----- No-overlap / travel constraints -----
     for i in range(n):
-        ci = cases_sorted[i]
+        ci = cases[i]
         si, ei, loc_i = ci["time"], ci["time"]+ci["duration"], ci["location"]
         for j in range(i+1, n):
-            cj = cases_sorted[j]
+            cj = cases[j]
             sj, ej, loc_j = cj["time"], cj["time"]+cj["duration"], cj["location"]
 
             # compute travel feasibility
@@ -71,7 +70,7 @@ def solve_cases_min_travel(cases, barristers, travel_times, assignment_fixed=Non
         for i in range(n):
             for j in range(i+1, n):
                 if (i,b) in assign and (j,b) in assign:
-                    if cases_sorted[j]["time"] >= cases_sorted[i]["time"] + cases_sorted[i]["duration"]:
+                    if cases[j]["time"] >= cases[i]["time"] + cases[i]["duration"]:
                         next_var[(b,i,j)] = model.NewBoolVar(f"next__b_{b}__c{i}_to_c{j}")
                         model.Add(next_var[(b,i,j)] <= assign[(i,b)])
                         model.Add(next_var[(b,i,j)] <= assign[(j,b)])
@@ -101,12 +100,23 @@ def solve_cases_min_travel(cases, barristers, travel_times, assignment_fixed=Non
     # ----- Objective: minimize total travel along consecutive edges -----
     travel_terms = []
     for (b,i,j), var in next_var.items():
-        loc_i = cases_sorted[i]["location"]
-        loc_j = cases_sorted[j]["location"]
-        travel = travel_times.get((loc_i, loc_j), 0)
+        loc_i = cases[i]["location"]
+        loc_j = cases[j]["location"]
+        travel = travel_times.get((loc_i, loc_j), 9999)
         travel_terms.append(travel*var)
-    model.Minimize(sum(travel_terms))
 
+    cost_terms = []
+    for (i,b), var in assign.items():
+        cname = cases[i]["name"]
+        cost = case_costs.get((cname, b), 9999) 
+        cost_terms.append(cost * var)
+
+    model.Minimize(sum(travel_terms) + sum(cost_terms))
+
+
+    return model, assign
+
+def ortools_solver(model, assign, cases, max_time_seconds):
     # ----- Solve -----
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = max_time_seconds
@@ -116,31 +126,271 @@ def solve_cases_min_travel(cases, barristers, travel_times, assignment_fixed=Non
         solution = {}
         for (i,b), var in assign.items():
             if solver.Value(var):
-                solution[cases_sorted[i]["name"]] = b
+                solution[cases[i]["name"]] = b
         return {
             "status": solver.StatusName(status),
             "assignment": solution,
-            "objective_travel": solver.ObjectiveValue()
+            "objective_score": solver.ObjectiveValue()
         }
     else:
         return {"status": solver.StatusName(status), "assignment": None}
     
+# ----------------------------
+# Test Case With Case Costs
+# ----------------------------
+
 cases = [
-    {"name": "A", "time": 10*60, "duration": 60, "location": "Loc1", "seniority": 1},
-    {"name": "B", "time": 11*60+30, "duration": 60, "location": "Loc1", "seniority": 1},
-    {"name": "C", "time": 16*60, "duration": 60, "location": "Loc2", "seniority": 1},
-    {"name": "D", "time": 17*60+30, "duration": 60, "location": "Loc2", "seniority": 1},
+    {"name": "A", "time": 9*60,      "duration": 60, "location": "Loc1", "seniority": 1},
+    {"name": "B", "time": 10*60+30,  "duration": 60, "location": "Loc1", "seniority": 1},
+    {"name": "C", "time": 14*60,     "duration": 60, "location": "Loc2", "seniority": 2},
+    {"name": "D", "time": 15*60+30,  "duration": 60, "location": "Loc2", "seniority": 1},
 ]
 
 barristers = [
-    {"name": "Alice", "seniority": 2, "schedule": [], "home": "Loc1"},
-    {"name": "Bob", "seniority": 2, "schedule": [], "home": "Loc2"},
+    {"name": "Alice",   "seniority": 3, "home": "Loc1", "schedule": []},
+    {"name": "Bob",     "seniority": 1, "home": "Loc1", "schedule": []},
+    {"name": "Charlie", "seniority": 2, "home": "Loc2", "schedule": []},
 ]
 
+# Travel times matrix
 travel_times = {
-    ("Loc1","Loc1"):0, ("Loc2","Loc2"):0,
-    ("Loc1","Loc2"):120, ("Loc2","Loc1"):120,
+    ("Loc1","Loc1"): 0,
+    ("Loc2","Loc2"): 0,
+    ("Loc1","Loc2"): 90,
+    ("Loc2","Loc1"): 90,
 }
 
-res = solve_cases_min_travel(cases, barristers, travel_times)
-print(res)
+# ----------------------------
+# Cost dictionary for each (case,barrister)
+# ----------------------------
+# cost = penalty, price, preference, etc.
+
+case_costs = {
+    ("A", "Alice"):   3,
+    ("A", "Bob"):     8,
+    ("A", "Charlie"): 6,
+
+    ("B", "Alice"):   2,
+    ("B", "Bob"):     5,
+    ("B", "Charlie"): 7,
+
+    ("C", "Alice"):   9,
+    ("C", "Bob"):     999,   # Bob can't take C (seniority too low), but cost included for completeness
+    ("C", "Charlie"): 1,
+
+    ("D", "Alice"):   4,
+    ("D", "Bob"):     3,
+    ("D", "Charlie"): 4,
+}
+
+
+
+import random
+from datetime import timedelta
+
+# --------------------------
+
+# ----------------------------
+# Barristers
+# ----------------------------
+barristers = [
+    {"name": "Alice", "seniority": 2, "home": "Loc1", "schedule": []},
+    {"name": "Bob", "seniority": 1, "home": "Loc2", "schedule": []},
+    {"name": "Charlie", "seniority": 3, "home": "Loc1", "schedule": []},
+]
+
+# ----------------------------
+# Cases (times in minutes since midnight)
+# ----------------------------
+cases = [
+    {"name": "A", "time": 9*60,  "duration": 60, "location": "Loc1", "seniority": 1},
+    {"name": "B", "time": 10*60+30, "duration": 60, "location": "Loc1", "seniority": 1},
+    {"name": "C", "time": 12*60, "duration": 60, "location": "Loc2", "seniority": 1},
+    {"name": "D", "time": 14*60, "duration": 60, "location": "Loc2", "seniority": 2},
+    {"name": "E", "time": 16*60, "duration": 60, "location": "Loc1", "seniority": 1},
+]
+
+# ----------------------------
+# Travel times (symmetric, in minutes)
+# ----------------------------
+travel_times = {
+    ("Loc1", "Loc1"): 0,
+    ("Loc2", "Loc2"): 0,
+    ("Loc1", "Loc2"): 60,
+    ("Loc2", "Loc1"): 60,
+}
+
+# ----------------------------
+# Case costs (lower = preferred)
+# ----------------------------
+case_costs = {
+    ("A", "Alice"): 2,
+    ("A", "Bob"): 5,
+    ("A", "Charlie"): 3,
+
+    ("B", "Alice"): 1,
+    ("B", "Bob"): 6,
+    ("B", "Charlie"): 2,
+
+    ("C", "Alice"): 5,
+    ("C", "Bob"): 1,
+    ("C", "Charlie"): 3,
+
+    ("D", "Alice"): 2,
+    ("D", "Bob"): 10,  # Bob too low seniority for D but included as high cost
+    ("D", "Charlie"): 1,
+
+    ("E", "Alice"): 3,
+    ("E", "Bob"): 8,
+    ("E", "Charlie"): 2,
+}
+
+# ----------------------------
+# Feasible assignment plan for reference:
+# Alice: A, B, E
+# Bob: C
+# Charlie: D
+# Travel times allow this:
+#   - Alice moves Loc1→Loc1 between A/B/E: 0 min travel
+#   - Bob: C only at Loc2, no conflicts
+#   - Charlie: D only at Loc2, feasible
+# ----------------------------
+
+
+# ----------------------------
+# Run OR-Tools solver
+# ----------------------------
+
+# ----------------------------
+# Barristers
+# ----------------------------
+barristers = [
+    {"name": "Alice", "seniority": 3, "home": "Loc1", "schedule": []},
+    {"name": "Bob", "seniority": 2, "home": "Loc2", "schedule": []},
+    {"name": "Charlie", "seniority": 2, "home": "Loc3", "schedule": []},
+    {"name": "Diana", "seniority": 1, "home": "Loc1", "schedule": []},
+    {"name": "Edward", "seniority": 2, "home": "Loc2", "schedule": []},
+]
+
+# ----------------------------
+# Cases (times in minutes since midnight)
+# ----------------------------
+cases = [
+    {"name": f"Case{i}", 
+     "time": 9*60 + i*30,  # every 30 minutes
+     "duration": 45, 
+     "location": f"Loc{(i%3)+1}",  # cycles through Loc1, Loc2, Loc3
+     "seniority": (i%3)+1}  # cycles 1,2,3
+    for i in range(20)
+]
+
+# ----------------------------
+# Travel times (in minutes)
+# ----------------------------
+travel_times = {
+    ("Loc1","Loc1"):0, ("Loc2","Loc2"):0, ("Loc3","Loc3"):0,
+    ("Loc1","Loc2"):30, ("Loc2","Loc1"):30,
+    ("Loc1","Loc3"):45, ("Loc3","Loc1"):45,
+    ("Loc2","Loc3"):20, ("Loc3","Loc2"):20,
+}
+
+# ----------------------------
+# Case costs (lower = preferred)
+# ----------------------------
+case_costs = {}
+for case in cases:
+    for barrister in barristers:
+        # Barristers with insufficient seniority get high cost
+        if barrister["seniority"] < case["seniority"]:
+            cost = 10**6
+        else:
+            # Randomized cost between 1–10
+            cost = ((hash(case["name"] + barrister["name"]) % 10) + 1)
+        case_costs[(case["name"], barrister["name"])] = cost
+
+# ----------------------------
+# Feasibility guaranteed:
+# - Cases are spaced every 30 minutes
+# - Duration = 45 mins → small overlaps
+# - Travel times <= 45 mins → still feasible for some barristers
+# - Seniorities cycle → some options are blocked, creating complexity
+# ----------------------------
+import hashlib
+
+# ----------------------------
+# Deterministic cost function
+# ----------------------------
+def deterministic_cost(case_name, barr_name):
+    h = int(hashlib.sha256((case_name + barr_name).encode()).hexdigest(), 16)
+    return (h % 10) + 1  # cost between 1–10
+
+# ----------------------------
+# Barristers
+# ----------------------------
+barristers = [
+    {"name": f"Barr{i}", "seniority": (i % 3) + 1, "home": f"Loc{(i%5)+1}", "schedule": []}
+    for i in range(8)
+]
+
+# ----------------------------
+# Cases (50 cases, spaced 15–30 mins apart)
+# ----------------------------
+cases = []
+for i in range(50):
+    case = {
+        "name": f"Case{i}",
+        "time": 9*60 + i*15,  # start at 9:00am, every 15 mins
+        "duration": 30 + (i % 3) * 5,  # 30–40 mins
+        "location": f"Loc{(i % 5) + 1}",  # cycles through 5 locations
+        "seniority": (i % 3) + 1  # 1,2,3 cycling
+    }
+    cases.append(case)
+
+# ----------------------------
+# Travel times between 5 locations (symmetric)
+# ----------------------------
+travel_times = {}
+locations = [f"Loc{i}" for i in range(1,6)]
+for loc1 in locations:
+    for loc2 in locations:
+        if loc1 == loc2:
+            travel_times[(loc1, loc2)] = 0
+        else:
+            # deterministic "random" travel 10–60 mins
+            travel_times[(loc1, loc2)] = 10 + (abs(ord(loc1[-1])-ord(loc2[-1]))*10)
+            travel_times[(loc2, loc1)] = travel_times[(loc1, loc2)]
+
+# ----------------------------
+# Case costs
+# ----------------------------
+case_costs = {}
+for case in cases:
+    for barr in barristers:
+        if barr["seniority"] < case["seniority"]:
+            cost = 10**6  # prohibit infeasible seniority
+        else:
+            cost = deterministic_cost(case["name"], barr["name"])
+        case_costs[(case["name"], barr["name"])] = cost
+
+# ----------------------------
+# Notes:
+# - Feasibility guaranteed: multiple barristers can cover each case.
+# - Travel distances and durations create overlaps, forcing OR-Tools to make scheduling decisions.
+# - Deterministic costs ensure reproducible results.
+# ----------------------------
+
+cases_sorted = sorted(cases, key=lambda c: c["time"])
+model, assign = solve_cases_min_travel(
+    cases_sorted,
+    case_costs,
+    barristers,
+    travel_times,
+    assignment_fixed=None,
+    max_time_seconds=30,  # limit for performance test
+)
+res = ortools_solver(model, assign, cases, 30)
+print("Status:", res["status"])
+print("Number of assignments:", len(res.get("assignment", {})))
+print("Objective travel+cost:", res.get("objective_score", None))
+
+

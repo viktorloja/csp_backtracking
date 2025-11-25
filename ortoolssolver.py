@@ -1,6 +1,6 @@
 from ortools.sat.python import cp_model
 
-def solve_cases_min_travel(cases, case_costs, barristers, travel_times, assignment_fixed=None, max_time_seconds=30):
+def setup_ortools_model(cases, case_costs, barristers, travel_times, assignment_fixed=None):
     # ----- Preprocess & indexing -----
     n = len(cases)
 
@@ -77,6 +77,7 @@ def solve_cases_min_travel(cases, case_costs, barristers, travel_times, assignme
                         for k in range(i+1,j):
                             if (k,b) in assign:
                                 model.Add(next_var[(b,i,j)] + assign[(k,b)] <= 1)
+                        model.Add(next_var[(b,i,j)] >= assign[(i,b)] + assign[(j,b)] - 1 - sum(assign[(k,b)] for k in range(i+1,j) if (k,b) in assign))
 
     # ----- Link next variables to assignments (forward) -----
     for b in barrister_names:
@@ -116,7 +117,7 @@ def solve_cases_min_travel(cases, case_costs, barristers, travel_times, assignme
 
     return model, assign
 
-def ortools_solver(model, assign, cases, max_time_seconds):
+def solve_ortools_model(model, assign, cases, max_time_seconds):
     # ----- Solve -----
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = max_time_seconds
@@ -380,17 +381,18 @@ for case in cases:
 # ----------------------------
 
 cases_sorted = sorted(cases, key=lambda c: c["time"])
-model, assign = solve_cases_min_travel(
+model, assign = setup_ortools_model(
     cases_sorted,
     case_costs,
     barristers,
     travel_times,
     assignment_fixed=None,
-    max_time_seconds=30,  # limit for performance test
 )
-res = ortools_solver(model, assign, cases, 30)
+
+res = solve_ortools_model(model, assign, cases_sorted, 30)
 print("Status:", res["status"])
 print("Number of assignments:", len(res.get("assignment", {})))
 print("Objective travel+cost:", res.get("objective_score", None))
+print(res["assignment"])
 
 

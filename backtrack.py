@@ -16,10 +16,9 @@ def heuristic_lower_bound(remaining_cases, csp):
   
     bound = 0
     for case in remaining_cases:
-        barrister_costs = csp.costs[case]
         current = 1000
         for barrister in csp.domains[case]:
-            current = min(barrister_costs[barrister], current)
+            current = min(csp.costs[(case, barrister)], current)
         bound += current
     return bound
 
@@ -70,7 +69,7 @@ def branch_and_bound(assignment, remaining_cases, current_cost, csp):
 
     # Try all feasible barristers
     for barrister in csp.domains[case]:
-        new_cost = current_cost + csp.costs[case][barrister]
+        new_cost = current_cost + csp.costs[(case, barrister)]
         assignment[case] = barrister
         nones, cost, removed = forward_check(csp, case, barrister, assignment)
         branch_and_bound(assignment, remaining_cases - set([case]) - nones, new_cost+cost, csp)
@@ -86,7 +85,6 @@ def branch_and_bound(assignment, remaining_cases, current_cost, csp):
 #travel_times: {(start, end): hours, ...}
 def define_inputs(cases, barristers, travel_times):
     n = len(cases)
-    cases.sort(key=lambda x: x["time"])
 
     variables = []
     domains = {}
@@ -163,3 +161,6 @@ def define_inputs(cases, barristers, travel_times):
 #completed: OR-tools
 #parent function for OR-tools / backtrack
 #evaluation function, gini coefficient
+def best_sol():
+    print(best_solution)
+    return best_solution

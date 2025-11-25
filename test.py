@@ -2,7 +2,11 @@ from backtrack import CSP
 from backtrack import branch_and_bound
 from backtrack import define_inputs
 from backtrack import best_solution
+from backtrack import best_sol
+from ortoolssolver import setup_ortools_model
+from ortoolssolver import solve_ortools_model
 import random
+import time, tracemalloc
 
 
 
@@ -127,13 +131,12 @@ for loc1 in locations:
 # ----------------------------
 case_costs = {}
 for case in cases:
-    case_costs[case["name"]] = {}
     for barr in barristers:
         if barr["senority"] < case["senority"]:
             cost = 10**6  # prohibit infeasible seniority
         else:
             cost = deterministic_cost(case["name"], barr["name"])
-        case_costs[case["name"]][barr["name"]] = cost
+        case_costs[(case["name"], barr["name"])] = cost
 
 # ----------------------------
 # Notes:
@@ -141,9 +144,9 @@ for case in cases:
 # - Travel distances and durations create overlaps, forcing OR-Tools to make scheduling decisions.
 # - Deterministic costs ensure reproducible results.
 # ----------------------------
-
-
-variables, domains, constraints = define_inputs(cases, barristers, travel_times)
+"""
+cases_sorted = sorted(cases, key=lambda c: c["time"])
+variables, domains, constraints = define_inputs(cases_sorted, barristers, travel_times)
 csp = CSP(variables, domains, constraints, case_costs)
 
 import time, tracemalloc
@@ -158,14 +161,30 @@ print("done")
 end_time = time.time()
 current, peak = tracemalloc.get_traced_memory()
 tracemalloc.stop()
+best_sol()
 
 print(f"\nRuntime: {end_time - start_time:.4f} seconds")
 print(f"Peak memory: {peak / 10**6:.2f} MB")
 #print(f"\nSolution: {result}")
 #print(best_solution)
-
-
 """
+def calculate_costs(cases, barristers):
+    case_costs = {}
+    for case in cases:
+        for barrister in barristers:
+            cost = 600
+            if case["type"] in barrister["expertise"]:
+                cost -= 200
+            cost -= min(200, barrister["experience"]*10)
+            cost -= 200*barrister["winrate"]
+            case_costs[(case["name"], barrister["name"])] = cost
+
+    return case_costs
+
+
+
+
+
 def evaluate():
     cases.sort(key=lambda x: x["time"])
     scores = {}
@@ -207,46 +226,57 @@ def solve_cases(cases, barristers, travel_times,
                 method="ortools",
                 **kwargs):
 
+    """
     Solve the case assignment problem using the chosen method.
     
     method options:
         - "ortools"
         - "backtracking"
+    """
     
     output = {}
 
     if method == "ortools":
+        cases_sorted = sorted(cases, key=lambda c: c["time"])
+
+        model, assign = setup_ortools_model(
+            cases_sorted,
+            case_costs,
+            barristers,
+            travel_times,
+            assignment_fixed=None,
+        )
+
         tracemalloc.start()
         start_time = time.time()
-        result = solve_cases_ortools(cases, case_costs, barristers, travel_times,
-                                   assignment_fixed=assignment_fixed,
-                                   **kwargs)
-        
+
+        result = solve_ortools_model(model, assign, cases_sorted, 30)
+
         end_time = time.time()
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
-
+        
         output["result"] = result
         output["runtime"] = end_time - start_time
         output["memory"] = peak / 10**6
 
     elif method == "backtracking":
 
-        variables, domains, constraints = define_inputs(cases, barristers, travel_times)
-        csp = CSP(variables, domains, constraints, costs)
-        branch_and_bound({}, set(variables), 0, csp)
+        cases_sorted = sorted(cases, key=lambda c: c["time"])
+        variables, domains, constraints = define_inputs(cases_sorted, barristers, travel_times)
+        csp = CSP(variables, domains, constraints, case_costs)
+
 
         tracemalloc.start()
         start_time = time.time()
-        result = solve_cases_backtracking(cases, case_costs, barristers, travel_times,
-                                        assignment_fixed=assignment_fixed,
-                                        **kwargs)
-        
+
+        branch_and_bound({}, set(variables), 0, csp)
+
         end_time = time.time()
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
 
-        output["result"] = result
+        output["result"] = best_sol()
         output["runtime"] = end_time - start_time
         output["memory"] = peak / 10**6
 
@@ -255,4 +285,3 @@ def solve_cases(cases, barristers, travel_times,
         raise ValueError(f"Unknown method: {method}")
 
     return result
-"""

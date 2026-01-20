@@ -5,81 +5,7 @@ from backtrack import best_solution
 from backtrack import best_sol
 from ortoolssolver import setup_ortools_model
 from ortoolssolver import solve_ortools_model
-import random
 import time, tracemalloc
-
-
-
-
-locations = ["London", "Cambridge", "Oxford"]
-barristers = [
-    {"name": "Alice", "senority": 3, "schedule": []},
-    {"name": "Bob", "senority": 2, "schedule": []},
-    {"name": "Charlie", "senority": 4, "schedule": []},
-]
-cases = [
-    {"name": "Case1", "time": 9, "duration": 3, "senority": 2, "location": "London"},
-    {"name": "Case2", "time": 12, "duration": 2, "senority": 3, "location": "Cambridge"},
-    {"name": "Case3", "time": 15, "duration": 1, "senority": 1, "location": "Oxford"},
-]
-
-travel_times = {
-    ("London", "Cambridge"): 1,
-    ("Cambridge", "London"): 1,
-    ("London", "Oxford"): 2,
-    ("Oxford", "London"): 2,
-    ("Cambridge", "Oxford"): 1,
-    ("Oxford", "Cambridge"): 1,
-}
-
-costs = {
-    "Case1": {"Alice": 6, "Bob": 8, "Charlie": 5},
-    "Case2": {"Alice": 7, "Bob": 5, "Charlie": 6},
-    "Case3": {"Alice": 4, "Bob": 6, "Charlie": 8},
-}
-
-travel_times = {
-    ("London", "Cambridge"): 1,
-    ("Cambridge", "London"): 1,
-    ("London", "Oxford"): 2,
-    ("Oxford", "London"): 2,
-    ("Cambridge", "Oxford"): 1,
-    ("Oxford", "Cambridge"): 1,
-    ("London", "London"): 0,
-    ("Oxford", "Oxford"): 0,
-    ("Cambridge", "Cambridge"): 0
-}
-
-cases = [
-    {"name": "Case1", "time": 9, "duration": 2, "senority": 2, "location": "London"},
-    {"name": "Case2", "time": 10, "duration": 3, "senority": 3, "location": "Cambridge"},
-    {"name": "Case3", "time": 11, "duration": 2, "senority": 1, "location": "Oxford"},
-    {"name": "Case4", "time": 13, "duration": 2, "senority": 2, "location": "London"},
-    {"name": "Case5", "time": 14, "duration": 1, "senority": 1, "location": "Cambridge"},
-    {"name": "Case6", "time": 15, "duration": 2, "senority": 3, "location": "Oxford"},
-]
-
-barristers = [
-    {"name": "Alice", "senority": 4, "schedule": []},
-    {"name": "Bob", "senority": 3, "schedule": [
-        {"start_time": 8, "end_time": 9, "location": "London"}  # already busy early
-    ]},
-    {"name": "Charlie", "senority": 2, "schedule": [
-        {"start_time": 11, "end_time": 12, "location": "Cambridge"}
-    ]},
-    {"name": "Dana", "senority": 3, "schedule": [
-        {"start_time": 16, "end_time": 17, "location": "Oxford"}  # busy late
-    ]},
-]
-
-costs = {
-    "Case1": {"Alice": 6, "Bob": 7, "Charlie": 5, "Dana": 8},
-    "Case2": {"Alice": 5, "Bob": 6, "Charlie": 8, "Dana": 7},
-    "Case3": {"Alice": 7, "Bob": 8, "Charlie": 6, "Dana": 5},
-    "Case4": {"Alice": 6, "Bob": 5, "Charlie": 7, "Dana": 8},
-    "Case5": {"Alice": 5, "Bob": 7, "Charlie": 6, "Dana": 6},
-    "Case6": {"Alice": 7, "Bob": 6, "Charlie": 9, "Dana": 5},
-}
 
 import hashlib
 
@@ -138,36 +64,7 @@ for case in cases:
             cost = deterministic_cost(case["name"], barr["name"])
         case_costs[(case["name"], barr["name"])] = cost
 
-# ----------------------------
-# Notes:
-# - Feasibility guaranteed: multiple barristers can cover each case.
-# - Travel distances and durations create overlaps, forcing OR-Tools to make scheduling decisions.
-# - Deterministic costs ensure reproducible results.
-# ----------------------------
-"""
-cases_sorted = sorted(cases, key=lambda c: c["time"])
-variables, domains, constraints = define_inputs(cases_sorted, barristers, travel_times)
-csp = CSP(variables, domains, constraints, case_costs)
 
-import time, tracemalloc
-tracemalloc.start()
-start_time = time.time()
-
-print("running")
-#MRV_variables = sorted(csp.variables, key=lambda var: len(csp.domains[var]))
-branch_and_bound({}, set(variables), 0, csp)
-print("done")
-
-end_time = time.time()
-current, peak = tracemalloc.get_traced_memory()
-tracemalloc.stop()
-best_sol()
-
-print(f"\nRuntime: {end_time - start_time:.4f} seconds")
-print(f"Peak memory: {peak / 10**6:.2f} MB")
-#print(f"\nSolution: {result}")
-#print(best_solution)
-"""
 def calculate_costs(cases, barristers):
     case_costs = {}
     for case in cases:
@@ -185,8 +82,7 @@ def calculate_costs(cases, barristers):
 
 
 
-def evaluate():
-    cases.sort(key=lambda x: x["time"])
+def evaluate(cases, barristers, best_solution):
     scores = {}
     locations = {}
     for barrister in barristers:
@@ -195,8 +91,9 @@ def evaluate():
         locations[name] = barrister["home"]
 
     for case in cases:
-        if case in best_solution:
-            barrister = best_solution[case] 
+        casename = case["name"]
+        if casename in best_solution:
+            barrister = best_solution[casename] 
             scores[barrister] += (case["duration"] + travel_times[(locations[barrister], case["location"])])
             locations[barrister] = case["location"]
 
@@ -237,7 +134,9 @@ def solve_cases(cases, barristers, travel_times,
     output = {}
 
     if method == "ortools":
+        
         cases_sorted = sorted(cases, key=lambda c: c["time"])
+        case_costs = calculate_costs(cases_sorted, barristers)
 
         model, assign = setup_ortools_model(
             cases_sorted,
@@ -256,16 +155,18 @@ def solve_cases(cases, barristers, travel_times,
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
         
-        output["result"] = result
+        output["result"] = result["assignment"]
         output["runtime"] = end_time - start_time
         output["memory"] = peak / 10**6
+        output["fairness"] = evaluate(cases_sorted, barristers, result["assignment"])
 
     elif method == "backtracking":
 
         cases_sorted = sorted(cases, key=lambda c: c["time"])
+        case_costs = calculate_costs(cases_sorted, barristers)
+
         variables, domains, constraints = define_inputs(cases_sorted, barristers, travel_times)
         csp = CSP(variables, domains, constraints, case_costs)
-
 
         tracemalloc.start()
         start_time = time.time()
@@ -279,9 +180,237 @@ def solve_cases(cases, barristers, travel_times,
         output["result"] = best_sol()
         output["runtime"] = end_time - start_time
         output["memory"] = peak / 10**6
+        output["fairness"] = evaluate(cases_sorted, barristers, best_sol())
+
 
 
     else:
         raise ValueError(f"Unknown method: {method}")
 
-    return result
+    return output
+
+import random
+
+random.seed(2)
+
+# --------------------------------------
+# LOCATIONS
+# --------------------------------------
+locations = [f"L{i}" for i in range(20)]
+
+travel_times = {}
+for i in range(len(locations)-1):
+    for j in range(i, len(locations)):
+        a = locations[i]
+        b = locations[j]
+        if a == b:
+            travel_times[(a,b)] = 0
+        else:
+            timee = random.randint(5,60)
+            travel_times[(a,b)] = timee
+            travel_times[(b,a)] = timee
+
+# --------------------------------------
+# BARRISTERS
+# --------------------------------------
+barristers = []
+for i in range(18):
+    schedules = []
+    # 1–3 availability blocks
+    for _ in range(random.randint(1, 3)):
+        s = random.randint(80, 300)
+        schedules.append({
+            "start_time": s,
+            "end_time": s + random.randint(60, 180),
+            "location": random.choice(locations)
+        })
+    barristers.append({
+        "name": f"B{i}",
+        "home": random.choice(locations),
+        "seniority": random.randint(0, 8),
+        "expertise": random.sample(["criminal", "family", "civil", "commercial", "employment"], k=3),
+        "experience": random.randint(0, 30),
+        "winrate": round(random.random(), 2),
+        "schedule": schedules
+    })
+
+# --------------------------------------
+# CASES
+# --------------------------------------
+cases = []
+t = 0
+for i in range(60):
+    start = t + random.randint(0, 30)
+    duration = random.randint(20, 90)
+    t = start
+    cases.append({
+        "name": f"C{i}",
+        "type": random.choice(["criminal", "family", "civil", "commercial", "employment"]),
+        "time": start,
+        "duration": duration,
+        "location": random.choice(locations),
+        "seniority": random.randint(0, 8)
+    })
+
+locations = ["A", "B", "C", "D", "E"]
+
+travel_times = {
+    ("A","A"):0, ("A","B"):10, ("A","C"):15, ("A","D"):20, ("A","E"):25,
+    ("B","A"):10, ("B","B"):0, ("B","C"):10, ("B","D"):20, ("B","E"):30,
+    ("C","A"):15, ("C","B"):10, ("C","C"):0, ("C","D"):10, ("C","E"):20,
+    ("D","A"):20, ("D","B"):20, ("D","C"):10, ("D","D"):0, ("D","E"):15,
+    ("E","A"):25, ("E","B"):30, ("E","C"):20, ("E","D"):15, ("E","E"):0,
+}
+
+barristers = [
+    {
+        "name": "B0",
+        "home": "A",
+        "seniority": 3,
+        "expertise": ["criminal", "civil"],
+        "experience": 10,
+        "winrate": 0.4,
+        "schedule": []   # fully free
+    },
+    {
+        "name": "B1",
+        "home": "B",
+        "seniority": 4,
+        "expertise": ["family", "criminal"],
+        "experience": 6,
+        "winrate": 0.3,
+        "schedule": []
+    },
+    {
+        "name": "B2",
+        "home": "C",
+        "seniority": 2,
+        "expertise": ["civil", "commercial"],
+        "experience": 3,
+        "winrate": 0.2,
+        "schedule": []
+    }
+]
+
+cases = [
+    {
+        "name": "C0",
+        "type": "criminal",
+        "time": 0,
+        "duration": 30,
+        "location": "A",
+        "seniority": 1
+    },
+    {
+        "name": "C1",
+        "type": "family",
+        "time": 60,
+        "duration": 30,
+        "location": "B",
+        "seniority": 1
+    },
+    {
+        "name": "C2",
+        "type": "civil",
+        "time": 120,
+        "duration": 30,
+        "location": "C",
+        "seniority": 2
+    },
+    {
+        "name": "C3",
+        "type": "commercial",
+        "time": 180,
+        "duration": 30,
+        "location": "D",
+        "seniority": 1
+    },
+    {
+        "name": "C4",
+        "type": "criminal",
+        "time": 240,
+        "duration": 30,
+        "location": "A",
+        "seniority": 2
+    }
+]
+
+locations = ["A","B","C","D","E","F","G","H","I","J"]
+
+travel_times = {}
+for a in locations:
+    for b in locations:
+        if a == b:
+            travel_times[(a,b)] = 0
+        else:
+            # Maximum travel time = 20 minutes
+            travel_times[(a,b)] = 10 + (abs(ord(a)-ord(b)) % 10)
+
+locations = ["A","B","C","D","E","F","G","H","I","J"]
+# Create a symmetric travel matrix
+base_times = [
+    [0, 10, 12, 14, 16, 18, 17, 15, 13, 11],
+    [10, 0,  9, 11, 13, 15, 16, 14, 12, 10],
+    [12, 9,  0,  8, 10, 12, 14, 16, 15, 13],
+    [14,11, 8,  0,  7,  9, 11, 13, 14, 16],
+    [16,13,10, 7,  0,  6,  8, 10, 12, 14],
+    [18,15,12, 9,  6,  0,  5,  7,  9, 11],
+    [17,16,14,11, 8,  5,  0,  6,  8, 10],
+    [15,14,16,13,10, 7,  6,  0,  5,  7],
+    [13,12,15,14,12, 9,  8,  5,  0,  6],
+    [11,10,13,16,14,11,10, 7,  6,  0]
+]
+
+travel_times = {}
+for i, a in enumerate(locations):
+    for j, b in enumerate(locations):
+        travel_times[(a,b)] = base_times[i][j]
+
+barristers = [
+    {"name":"B0","home":"A","seniority":5,"expertise":["criminal","family","civil"],"experience":10,"winrate":0.4,"schedule":[]},
+    {"name":"B1","home":"B","seniority":4,"expertise":["civil","commercial","family"],"experience":8,"winrate":0.35,"schedule":[]},
+    {"name":"B2","home":"C","seniority":6,"expertise":["criminal","employment"],"experience":7,"winrate":0.25,"schedule":[]},
+    {"name":"B3","home":"D","seniority":5,"expertise":["commercial","civil"],"experience":12,"winrate":0.50,"schedule":[]},
+    {"name":"B4","home":"E","seniority":7,"expertise":["criminal","family","immigration"],"experience":6,"winrate":0.22,"schedule":[]},
+    {"name":"B5","home":"F","seniority":3,"expertise":["civil","commercial","employment"],"experience":5,"winrate":0.28,"schedule":[]},
+    {"name":"B6","home":"G","seniority":4,"expertise":["family","immigration"],"experience":9,"winrate":0.31,"schedule":[]},
+    {"name":"B7","home":"H","seniority":8,"expertise":["criminal","commercial"],"experience":11,"winrate":0.45,"schedule":[]}
+]
+case_types = ["criminal","family","civil","commercial","employment","immigration"]
+
+cases = []
+timee = 0
+loc_cycle = ["A","B","C","D","E","F","G","H","I","J"]
+
+for i in range(40):
+    cases.append({
+        "name": f"C{i}",
+        "type": case_types[i % len(case_types)],
+        "time": timee,
+        "duration": 30,
+        "location": loc_cycle[i % len(loc_cycle)],
+        "seniority": (i % 3)
+    })
+    timee += 45
+
+res = solve_cases(cases, barristers, travel_times, method="backtracking")
+print(res)
+print(len(res["result"]))
+res = solve_cases(cases, barristers, travel_times)
+print(res)
+print(len(res["result"]))
+
+
+# barrister case history
+# different cost functions, weigh different things, e.g. optimize for experience, winrate?
+# optimize for training?
+# cost function to give more experience to junior barristers on non-critical cases
+# refactor code to run input with multiple different cost functions, then surface results for human evaluation
+
+# christmas
+# optimize functions more
+# nlp to convert case textfile -> markdown info file
+# schedule visualization?
+# sketch UI / frontend - email for feedback over holiday
+# typescript?
+# clerk evaluation

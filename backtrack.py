@@ -80,8 +80,8 @@ def branch_and_bound(assignment, remaining_cases, current_cost, csp):
 
         del assignment[case]  # backtrack
 
-#cases: list of dicts [{"name": case, "time": time, "senority": senority, "location": location, "duration": duration}, ...]
-#barristers: list of dicst [{"name": barrister, "schedule": [dict{start_time, end_time, location}, ...], "senority": senority, "home": home_location}, ...]
+#cases: list of dicts [{"name": case, "time": time, "seniority": seniority, "location": location, "duration": duration}, ...]
+#barristers: list of dicst [{"name": barrister, "schedule": [dict{start_time, end_time, location}, ...], "seniority": seniority, "home": home_location}, ...]
 #travel_times: {(start, end): hours, ...}
 def define_inputs(cases, barristers, travel_times):
     n = len(cases)
@@ -94,7 +94,7 @@ def define_inputs(cases, barristers, travel_times):
         variables.append(name)
         domains[name] = []
         for barrister in barristers:
-            if barrister["senority"] >= case["senority"]:
+            if barrister["seniority"] >= case["seniority"]:
                 case_time = case["time"]
                 case_duration = case["duration"]
                 case_location = case["location"]
@@ -164,3 +164,27 @@ def define_inputs(cases, barristers, travel_times):
 def best_sol():
     print(best_solution)
     return best_solution
+
+
+#create proper test corpus - sufficiently large and conflicted
+#profiles for (criminal) cases and (mix of crime & civil) barristers, markdown files
+#in-depth barrister profiles - number of cases, types, years, winrate
+#list of barristers and their cases, then map this to a data structure
+#cases: fees, charges (type - robbery, petty theft, etc.), punishment (severity), person being charged etc.
+
+#generate model files for now
+
+#scenarios: too many cases, partial assignments
+#           improper experience
+#           
+
+
+#two different schedules? an optimized one, and one for getting barristers more experience
+#is a case 'critical' or not?
+#case files, possible prison sentence - critical or not
+#process a paragraph of text, NLP library?
+#generate case files
+#evaluate against human judgement
+#process PDFs - extract text
+#barrister preferences / how they work better
+#evaluate against an LLM doing scheduling

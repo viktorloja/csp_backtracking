@@ -1,0 +1,11 @@
+# Barrister: David O’Connell  
+- **Name:** B2  
+- **Seniority:** 5  
+- **Home:** Home_Y  
+- **Win Rate:** 65%  
+- **Specialisms:** Civil Litigation, Theft  
+- **Case Load:** 120 cases total  
+- **Schedule:**  
+  - 9.0–10.0, Court_B  
+  - 12.0–13.5, Court_B  
+- **Notes:** Often handles back-to-back minor criminal matters.  

@@ -1,0 +1,11 @@
+# Barrister: Sarah Milford  
+- **Name:** B1  
+- **Seniority:** 10  
+- **Home:** Home_X  
+- **Win Rate:** 72%  
+- **Specialisms:** Robbery, Fraud, Violent Crime  
+- **Case Load:** 230 cases total  
+- **Schedule:**  
+  - 8.0–9.0, Court_A  
+  - 11.5–13.0, Court_C  
+- **Notes:** Excellent with complex criminal cases.  

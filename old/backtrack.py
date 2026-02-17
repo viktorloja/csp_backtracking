@@ -23,18 +23,18 @@ def heuristic_lower_bound(remaining_cases, csp):
     return bound
 
 
-def forward_check(csp, var, value, assignment):
+def forward_check(csp, case, barrister, assignment):
     removed = set()
     nones = set()
     cost = 0
-    for (x, y) in csp.constraints:
-        if x == var and y not in assignment:
-            if value in csp.domains[y]:
-                csp.domains[y].remove(value)
-                removed.add(y)
-            if not csp.domains[y]:  # dead-end
+    for (case1, case2) in csp.constraints:
+        if case1 == case and case2 not in assignment:
+            if barrister in csp.domains[case2]:
+                csp.domains[case2].remove(barrister)
+                removed.add(case2)
+            if not csp.domains[case2]:  # dead-end
                 cost += 1000
-                nones.add(y)
+                nones.add(case2)
     return nones, cost, removed
 
 
@@ -188,3 +188,5 @@ def best_sol():
 #process PDFs - extract text
 #barrister preferences / how they work better
 #evaluate against an LLM doing scheduling
+
+

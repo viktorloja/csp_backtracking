@@ -157,6 +157,16 @@ def generate_schedule(cases, barristers, travel_times,
         output["fairness"] = evaluate(cases_sorted, barristers, best_sol())
         """
 
+    elif method == "greedy":
+
+        result = setup_model(
+            cases_sorted,
+            barristers,
+            travel_times,
+            case_costs,
+            assignment_fixed=assignment_fixed,
+        )
+
 
     else:
         raise ValueError(f"Unknown method: {method}")

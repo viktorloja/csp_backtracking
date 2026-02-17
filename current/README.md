@@ -12,3 +12,22 @@ I will code up my backtracking implementation here
 # evaluation techniques
 # consider graphs, e.g. running scaling inputs to evaluate how runtime/mem scales for each algo
 # look at other papers - calendar matching problems, other algos/evaluation techniques
+
+Barrister info pages
+https://www.directaccessportal.co.uk/search-barristers.html
+
+
+# evaluation metrics
+# basic greedy algorithm
+# generate test data
+# add case history to barrister profiles
+# research papers with similar problem - what algorithms, what evaluation ### 1
+
+
+# Hungarian Method (Kuhn, 1955)
+
+
+# unit tests (test each function)
+# validation tests (expected schedules)
+# evaluation tests (for evaluation phase: generate tests to compare models)
+# implement a naive backtracking

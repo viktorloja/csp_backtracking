@@ -55,8 +55,10 @@ def setup_model(
         blocks = b.get("schedule", [])
         bname = b["name"]
         home = b["home"]
+        b_start = b.get("day_start", day_start)
+        b_end = b.get("day_end", day_end)
 
-        mandatory = [{"start": day_start, "end": day_start, "location": home}]
+        mandatory = [{"start": b_start, "end": b_start, "location": home}]
         for blk in blocks:
             mandatory.append({
                 "start": blk["start_time"],
@@ -64,7 +66,7 @@ def setup_model(
                 "location": blk.get("location", home),
             })
             schedule[bname].append([blk["start_time"], blk["end_time"], blk["location"], "blocked"])
-        mandatory.append({"start": day_end, "end": day_end, "location": home})
+        mandatory.append({"start": b_end, "end": b_end, "location": home})
 
         mandatory_by_b[bname] = mandatory
         mandatory_starts_by_b[bname] = [e["start"] for e in mandatory]
@@ -164,6 +166,20 @@ def setup_model(
             # exactly one barrister OR unassigned
             model.Add(sum(feasible_vars) + unassigned[i] == 1)
 
+    cases_length = len(cases)
+    case_clashes = set()
+
+    for i in range(cases_length):
+        for j in range(i+1, cases_length):
+            case1 = cases[i]
+            case2 = cases[j]
+            if case1["start"] + case1["duration"] + travel(case1["location"], case2["location"]) > case2["start"]:
+                for bname in barrister_names:
+                    model.Add(assign[(i,bname)] + assign[(j,bname)] <= 1)
+                case_clashes.add((case1["name"], case2["name"]))
+
+
+
     # ---- Build full route per barrister: home_start -> events -> home_end ----
     #
     # We create arc variables only for time+travel feasible forward arcs.
@@ -244,6 +260,8 @@ def setup_model(
         for j in range(mandatory_nums+1, mandatory_nums+offset):
             case1 = viable_cases[j]
             case2 = viable_cases[j+1]
+            if (case1["name"], case2["name"]) in case_clashes:
+                continue
             if not skips_mandatory_block(bname, case1["time"]+case1["duration"], case2["time"]):
                 x = model.NewBoolVar(f"arc__{bname}__{j}_to_{j+1}")
                 outgoing[j].append(x)

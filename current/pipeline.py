@@ -24,67 +24,44 @@ def process(
     if not barristers:
         raise RuntimeError("No barristers loaded.")
 
-    # travel times
+   
+    # run all the solvers and gather results
 
-    #print(cases)
-    #print(barristers)
-    #print(travel_times)
-    # run solver
-    print(f"Running solver: backtracking")
-    backtrack_result = generate_schedule(
-        method="ortools",
-        barristers=barristers,
-        cases=cases,
-        travel_times=travel_times,
-        training=training,
-    )
+    results = {}
+    solvers = ["ortools", "backtrack", "greedy"]
 
-    print(f"Running solver: ortoolssolver")
-    ortools_result = generate_schedule(
-        method="ortools",
-        barristers=barristers,
-        cases=cases,
-        travel_times=travel_times,
-        training=training,
-    )
-     
+    for solver in solvers:
 
-    backtrack_schedule = backtrack_result.get("schedule")
-    backtrack_objective = backtrack_result.get("objective")
-    backtrack_status = backtrack_result.get("status")
-
-    ortools_schedule = ortools_result.get("schedule")
-    ortools_objective = ortools_result.get("objective")
-    ortools_status = ortools_result.get("status")
-
-    if not backtrack_schedule:
-        raise RuntimeError("Backtracking solver returned no schedule.")
-    
-    if not ortools_schedule:
-        raise RuntimeError("Ortools solver returned no schedule")
+        print(f"Running solver: backtracking")
+        result = generate_schedule(
+            method=solver,
+            barristers=barristers,
+            cases=cases,
+            travel_times=travel_times,
+            training=training,
+        )
 
 
-    # Render HTML
-   # os.makedirs(os.path.dirname(args.out), exist_ok=True)
-
-    backtrack_output = output/ (out_name+"-backtracking.html")
-
-    backtrack_path = render_schedule_html_from_barrister_events(
-        backtrack_schedule,
-        title="Barrister Schedule",
-        out_path=backtrack_output,
-    )
-
-    ortools_output = output/ (out_name+"-ortools.html")
-
-    ortools_path = render_schedule_html_from_barrister_events(
-        ortools_schedule,
-        title="Barrister Schedule",
-        out_path=ortools_output,
-    )
-
-    print("HTML backtrack-schedule written to:", backtrack_path)
-    print("HTML ortools-schedule written to:", ortools_path)
+        schedule = result.get("schedule")
+        objective = result.get("objective")
+        status = result.get("status")
 
 
-    return backtrack_objective, backtrack_status, ortools_objective, ortools_status
+        if not schedule:
+            raise RuntimeError(solver+" solver returned no schedule.")
+
+        # Render HTML
+
+        output_path = output/ (out_name+"-"+solver+".html")
+
+        backtrack_path = render_schedule_html_from_barrister_events(
+            schedule,
+            title="Barrister Schedule",
+            out_path=output_path,
+        )
+
+        print("HTML "+solver+"-schedule written to:", output_path)
+        results[solver] = {"objective": objective, "status": status}
+
+
+    return results

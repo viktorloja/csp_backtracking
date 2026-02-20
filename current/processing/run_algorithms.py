@@ -1,4 +1,7 @@
-from ortoolssolver3 import *
+from algorithms.ortoolssolver3 import *
+from algorithms.backtrack_optimized import *
+from algorithms.greedy import greedy
+from algorithms.backtrack_naive import *
 import tracemalloc
 import time
 
@@ -129,43 +132,66 @@ def generate_schedule(cases, barristers, travel_times,
         
         output["result"] = result["assignment"]
         output["schedule"] = result["schedule"]
+        output["score"] = result["objective"]
         output["runtime"] = end_time - start_time
         output["memory"] = peak / 10**6
         
         bnames = []
-        print(output)
+        #print(output)
         #output["fairness"] = evaluate(barristers, travel_times, result["schedule"])
 
     elif method == "backtrack":
-        print("b")
-        """
-        variables, domains, constraints = define_inputs(cases_sorted, barristers, travel_times)
-        csp = CSP(variables, domains, constraints, case_costs)
-
+        
+        domains, constraints, timelines, timelines_starts = define_inputs(cases_sorted, barristers, travel_times)
+    
         tracemalloc.start()
         start_time = time.time()
 
-        branch_and_bound({}, set(variables), 0, csp)
+        solution, cost, schedules = branch_and_bound(
+            cases,
+            timelines,
+            timelines_starts,
+            travel_times,
+            case_costs,
+            domains,
+            constraints,
+        )
+
 
         end_time = time.time()
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
 
-        output["result"] = best_sol()
+        output["result"] = solution
+        output["schedule"] = schedules
+        output["score"] = cost
         output["runtime"] = end_time - start_time
         output["memory"] = peak / 10**6
-        output["fairness"] = evaluate(cases_sorted, barristers, best_sol())
-        """
+        #output["fairness"] = evaluate(cases_sorted, barristers, best_sol())
+
 
     elif method == "greedy":
 
-        result = setup_model(
-            cases_sorted,
+        tracemalloc.start()
+        start_time = time.time()
+
+        solution, schedules, cost = greedy(
+            cases,
             barristers,
             travel_times,
             case_costs,
-            assignment_fixed=assignment_fixed,
+            assignment_fixed = assignment_fixed
         )
+
+        end_time = time.time()
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+
+        output["result"] = solution
+        output["schedule"] = schedules
+        output["score"] = cost
+        output["runtime"] = end_time - start_time
+        output["memory"] = peak / 10**6
 
 
     else:

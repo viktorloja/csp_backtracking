@@ -1,12 +1,17 @@
-from md_loader import load_cases_from_folder, load_barristers_from_folder
-from llm_summary import process_folder_txt_to_md
-from generate_schedule import generate_schedule
-from html_output import render_schedule_html_from_barrister_events
+from functions.md_loader import load_cases_from_folder, load_barristers_from_folder
+from functions.llm_summary import process_folder_txt_to_md
+from functions.generate_schedule import generate_schedule
+from functions.html_output import render_schedule_html_from_barrister_events
 
 def process(
-        format, training, cases_path, barristers_path, travel_times, output, out_name):
-    
-    travel_times = {("London", "Court2"): 60, ("Court2", "London"): 60, ("Court2", "Court2"): 0}
+    format,
+    training,
+    cases_path,
+    barristers_path,
+    travel_times,
+    output,
+    out_name
+):
 
     if format == "txt":
         print("Running LLM summarisation...")
@@ -32,7 +37,7 @@ def process(
 
     for solver in solvers:
 
-        print(f"Running solver: backtracking")
+        print(f"Running solver: "+solver)
         result = generate_schedule(
             method=solver,
             barristers=barristers,
@@ -42,10 +47,7 @@ def process(
         )
 
 
-        schedule = result.get("schedule")
-        objective = result.get("objective")
-        status = result.get("status")
-
+        schedule = result["schedule"]
 
         if not schedule:
             raise RuntimeError(solver+" solver returned no schedule.")
@@ -54,14 +56,14 @@ def process(
 
         output_path = output/ (out_name+"-"+solver+".html")
 
-        backtrack_path = render_schedule_html_from_barrister_events(
+        html_path = render_schedule_html_from_barrister_events(
             schedule,
             title="Barrister Schedule",
             out_path=output_path,
         )
 
-        print("HTML "+solver+"-schedule written to:", output_path)
-        results[solver] = {"objective": objective, "status": status}
+        print("HTML "+solver+"-schedule written to: "+output_path)
+        results[solver] = result
 
 
     return results

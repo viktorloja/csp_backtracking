@@ -6,7 +6,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 
-def plot_solver_barcharts_raw(
+def plot_graph(
     results: Sequence[Dict[str, Any]],
     *,
     scenario_key: str = "scenario",
@@ -101,7 +101,7 @@ results = [
     {"scenario": "medium_10b_50c", "solver": "backtrack", "quality": 900, "runtime_s": 25.0, "memory_mb": 60},
 ]
 
-paths = plot_solver_barcharts_raw(
+paths = plot_graph(
     results,
     metrics=("quality", "runtime_s", "memory_mb"),
     out_dir="results/plots",

@@ -31,3 +31,11 @@ https://www.directaccessportal.co.uk/search-barristers.html
 # validation tests (expected schedules)
 # evaluation tests (for evaluation phase: generate tests to compare models)
 # implement a naive backtracking
+# genetic algorithm?
+
+# computational complexity of algorithms, compare results (or expected results)
+# explain field, why is this a problem
+# manual scheduling solved with computers
+# optimization problem
+# group functions, e.g. processing / outputting functions
+# mention test data and relevance, compare to real court data (fixed times)

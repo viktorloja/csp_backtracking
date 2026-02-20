@@ -88,30 +88,30 @@ def setup_model(
         c_loc = case["location"]
 
         # Find the rightmost mandatory event with start <= c_start
-        idx = bisect_right(starts, c_start) - 1
-        if idx < 0:
-            idx = 0
-        if idx >= len(blocks) - 1:
-            return None  # beyond barrister end time
+        idx = bisect_right(starts, c_start)
+      
+        if idx == 0 or idx == len(starts):
+            return None, None  # outside barrister's working times
 
-        prev_event = blocks[idx]
-        next_event = blocks[idx + 1]
+
+        prev_event = blocks[idx-1]
+        next_event = blocks[idx]
 
         # Must lie within the time gap (ignoring travel first)
         if not (prev_event["end"] <= c_start and c_end <= next_event["start"]):
-            return None
+            return None, None
 
         t_prev = travel(prev_event["location"], c_loc)
         t_next = travel(c_loc, next_event["location"])
         if t_prev is None or t_next is None:
-            return None
+            return None, None
 
         if prev_event["end"] + t_prev > c_start:
-            return None
+            return None, None
         if c_end + t_next > next_event["start"]:
-            return None
+            return None, None
 
-        return idx, idx+1
+        return idx-1, idx
 
 
     assign = {}      # (case_index, barrister_name) -> BoolVar
@@ -152,7 +152,8 @@ def setup_model(
                 continue
 
             # mandatory-gap feasibility prune (binary search)
-            if not case_fits_between_mandatory(case, bname):
+            before, after = case_fits_between_mandatory(case, bname)
+            if not before:
                 continue
 
             v = model.NewBoolVar(f"assign__{cname}__to__{bname}")
@@ -173,9 +174,10 @@ def setup_model(
         for j in range(i+1, cases_length):
             case1 = cases[i]
             case2 = cases[j]
-            if case1["start"] + case1["duration"] + travel(case1["location"], case2["location"]) > case2["start"]:
+            if case1["time"] + case1["duration"] + travel(case1["location"], case2["location"]) > case2["time"]:
                 for bname in barrister_names:
-                    model.Add(assign[(i,bname)] + assign[(j,bname)] <= 1)
+                    if (i,bname) in assign and (j,bname) in assign:
+                        model.Add(assign[(i,bname)] + assign[(j,bname)] <= 1)
                 case_clashes.add((case1["name"], case2["name"]))
 
 
@@ -198,7 +200,7 @@ def setup_model(
             right = bisect_right(block_starts, v_start)
             #left = bisect_right(block_starts, u_end)
             #right = bisect_left(block_starts, v_start)
-            return left < right
+            return left != right
 
     for b in barristers:
         bname = b["name"]
@@ -339,7 +341,7 @@ def solve_model(model, assign, unassigned, cases_sorted, schedule, *, max_time_s
 
     for i in range(n):
         if solver.Value(unassigned[i]) == 1:
-            unassigned_cases.append(case["name"])
+            unassigned_cases.append(i)
 
     for (case_i, bname), var in assign.items():
         if solver.Value(var) == 1:

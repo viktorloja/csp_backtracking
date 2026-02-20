@@ -1,5 +1,5 @@
-from generate_schedule import generate_schedule
-from html_output import render_schedule_html_from_barrister_events
+from current.pipeline.generate_schedule import generate_schedule
+from current.pipeline.html_output import render_schedule_html_from_barrister_events
 
 # -------------------------
 # Feasible test data

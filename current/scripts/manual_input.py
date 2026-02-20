@@ -1,8 +1,7 @@
 import argparse
 from pathlib import Path
 
-from pipeline import process
-from metrics_graph import plot_graph
+from functions.pipeline import process
 
 def main():
     parser = argparse.ArgumentParser(

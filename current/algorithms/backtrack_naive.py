@@ -42,17 +42,18 @@ def build_base_timelines(barristers):
     return base, base_starts
 
 
-def travel_time(travel_times, loc_a, loc_b):
+def travel(travel_times, loc_a, loc_b):
     if loc_a == loc_b:
         return 0
     return travel_times.get((loc_a, loc_b), None)
 
 
-def calculate_initial_cost(timelines):
+def calculate_initial_cost(timelines, travel_times):
     initial_cost = 0
     for schedule in timelines.values():
         for i in range(len(schedule)-1):
-            initial_cost += travel_time(schedule[i].location, schedule[i+1].location)
+            initial_cost += travel(travel_times, schedule[i].location, schedule[i+1].location)
+    return initial_cost
 
 
 def case_insert_cost(
@@ -80,9 +81,9 @@ def case_insert_cost(
     next_start, next_loc = next_ev.start, next_ev.location
 
     # delta travel
-    t_prev = travel_time(travel_times, prev_loc, c_loc)
-    t_next = travel_time(travel_times, c_loc, next_loc)
-    t_prev_next = travel_time(travel_times, prev_loc, next_loc)
+    t_prev = travel(travel_times, prev_loc, c_loc)
+    t_next = travel(travel_times, c_loc, next_loc)
+    t_prev_next = travel(travel_times, prev_loc, next_loc)
 
     delta = t_prev + t_next - t_prev_next
     return delta, idx
@@ -97,14 +98,15 @@ def lower_bound_case_cost_only(remaining_cases, domains, cost_lookup):
         bnd += min(cost_lookup[(case, b)] for b in domains[case])
     return bnd
 
-def branch_and_bound_travel(
+def branch_and_bound_naive(
     cases,
+    barristers,
     timelines,
     timelines_starts,
     travel_times,
     case_costs,                # dict {(case_name, barrister_name): cost}
-    domains,                   # dict {case_name: [barrister_names...]}
-    constraints=None,          # optional; you can ignore or keep for extra pruning
+    domains,                   # dict {case_name: [barrister_names...]}            
+    constraints,        
     *,
     lambda_travel=1.0,
     unassigned_penalty=10_000,
@@ -132,26 +134,8 @@ def branch_and_bound_travel(
 
     # mutable state during search
     assignment = {}
-
     remaining = set(domains.keys())
 
-    # heuristic: degree for tie-break
-    def choose_next_case(rem):
-        # MRV + degree tie-break
-        return min(rem, key=lambda c: (len(domains[c]), -len(neighbours.get(c, ()))))
-
-    def order_values(case):
-        # LCV-ish: sort by incremental (case_cost + lambda*delta_travel)
-        vals = []
-        for b in domains[case]:
-            if b == UNASSIGNED:
-                vals.append((case_costs[(case, UNASSIGNED)], UNASSIGNED, None))
-                continue
-            delta, idx = case_insert_cost(case, timelines[b], timelines_starts[b], travel_times)
-            inc = case_costs[(case, b)] + lambda_travel * delta
-            vals.append((inc, b, idx))
-        vals.sort(key=lambda x: x[0])
-        return vals
 
     def dfs(rem_cases, current_cost):
         nonlocal best_solution, best_cost
@@ -162,50 +146,40 @@ def branch_and_bound_travel(
                 best_solution = assignment.copy()
             return
 
-        # bound prune
-        bnd = current_cost + lower_bound_case_cost_only(rem_cases, domains, case_costs)
-        if bnd >= best_cost:
-            return
+        for cname in rem_cases:
+            for barrister in barristers:
+                    
+                new_cost = current_cost + inc
+                if new_cost >= best_cost:
+                    break  # candidates sorted by inc
 
-        case = choose_next_case(rem_cases)
-        candidates = order_values(case)
-
-        # small extra prune: if best possible for this case already too large
-        if current_cost + candidates[0][0] >= best_cost:
-            return
-
-        for inc, b, idx in candidates:
-            new_cost = current_cost + inc
-            if new_cost >= best_cost:
-                break  # candidates sorted by inc
-
-            assignment[case] = b
-            # remove b from domains of conflicting cases
-            for neighbour in neighbours[case]:
-                domains[neighbour].remove(b)
+                assignment[cname] = b
+                # remove b from domains of conflicting cases
+                for neighbour in neighbours[cname]:
+                    domains[neighbour].remove(b)
 
 
-            inserted = False
-            if b != UNASSIGNED:
-                # insert event
-                c = cases_by_name[case]
-                ev = Event(c["time"], c["time"] + c["duration"], c["location"], "CASE")
-                timelines[b].insert(idx, ev)
-                inserted = True
+                inserted = False
+                if b != UNASSIGNED:
+                    # insert event
+                    c = cases_by_name[cname]
+                    ev = Event(c["time"], c["time"] + c["duration"], c["location"], "CASE")
+                    timelines[b].insert(idx, ev)
+                    inserted = True
 
-            dfs(rem_cases - {case}, new_cost)
+                dfs(rem_cases - {cname}, new_cost)
 
-            # undo
-            if inserted:
-                timelines[b].pop(idx)
+                # undo
+                if inserted:
+                    timelines[b].pop(idx)
 
-            for neighbour in neighbours[case]:
-                domains[neighbour].add(b)
+                for neighbour in neighbours[cname]:
+                    domains[neighbour].add(b)
 
-            del assignment[case]
+                del assignment[cname]
 
-    dfs(remaining, 0.0)
-    return best_solution, best_cost
+    dfs(remaining, calculate_initial_cost(timelines, travel_times))
+    return best_solution, best_cost, timelines
 
 def case_fits(
     case,
@@ -237,8 +211,8 @@ def case_fits(
     prev_end, prev_loc = prev_ev.end, prev_ev.location
     next_start, next_loc = next_ev.start, next_ev.location
 
-    t_prev = travel_time(travel_times, prev_loc, c_loc)
-    t_next = travel_time(travel_times, c_loc, next_loc)
+    t_prev = travel(travel_times, prev_loc, c_loc)
+    t_next = travel(travel_times, c_loc, next_loc)
     if t_prev is None or t_next is None:
         return False
     
@@ -255,7 +229,6 @@ def define_inputs(cases, barristers, travel_times):
     n = len(cases)
     timelines, timelines_starts = build_base_timelines(barristers)
 
-    #variables = []
     domains = {}
     constraints = set()
 
@@ -264,8 +237,9 @@ def define_inputs(cases, barristers, travel_times):
         domains[cname] = set()
         for barrister in barristers:
             if barrister["seniority"] >= case["seniority"]:
-                if case_fits(case, timelines[barrister], timelines_starts[barrister], travel_times):
-                    domains[cname].add(barrister["name"])
+                bname = barrister["name"]
+                if case_fits(case, timelines[bname], timelines_starts[bname], travel_times):
+                    domains[cname].add(bname)
 
     for i in range(n-1):
         for j in range(i+1, n):

@@ -122,7 +122,7 @@ def setup_model(
         cname = case["name"]
         required_b = assignment_fixed.get(cname, None)
 
-        unassigned[i] = model.NewBoolVar(f"unassigned__{cname}")
+        unassigned[cname] = model.NewBoolVar(f"unassigned__{cname}")
 
         if required_b is not None:
             # Only create the required assignment var (after sanity checks)
@@ -133,13 +133,14 @@ def setup_model(
             if b_rec.get("seniority", 0) < case.get("seniority", 0):
                 raise ValueError(f"Fixed assignment {cname}->{required_b} violates seniority.")
 
-            if not case_fits_between_mandatory(case, required_b):
+            before, after = case_fits_between_mandatory(case, required_b)
+            if before is None:
                 raise ValueError(f"Fixed assignment {cname}->{required_b} cannot fit around mandatory blocks/home.")
 
             v = model.NewBoolVar(f"assign__{cname}__to__{required_b}")
-            assign[(i, required_b)] = v
+            assign[(cname, required_b)] = v
             model.Add(v == 1)
-            model.Add(unassigned[i] == 0)
+            model.Add(unassigned[cname] == 0)
             continue
 
         # Non-fixed: create only feasible assign vars
@@ -153,31 +154,33 @@ def setup_model(
 
             # mandatory-gap feasibility prune (binary search)
             before, after = case_fits_between_mandatory(case, bname)
-            if not before:
+            if before is None:
                 continue
 
             v = model.NewBoolVar(f"assign__{cname}__to__{bname}")
-            assign[(i, bname)] = v
+            assign[(cname, bname)] = v
             feasible_vars.append(v)
 
         # If nobody can take it, force unassigned
         if not feasible_vars:
-            model.Add(unassigned[i] == 1)
+            model.Add(unassigned[cname] == 1)
         else:
             # exactly one barrister OR unassigned
-            model.Add(sum(feasible_vars) + unassigned[i] == 1)
+            model.Add(sum(feasible_vars) + unassigned[cname] == 1)
 
     cases_length = len(cases)
     case_clashes = set()
 
-    for i in range(cases_length):
+    for i in range(cases_length-1):
         for j in range(i+1, cases_length):
             case1 = cases[i]
             case2 = cases[j]
+            cname1 = case1["name"]
+            cname2 = case2["name"]
             if case1["time"] + case1["duration"] + travel(case1["location"], case2["location"]) > case2["time"]:
                 for bname in barrister_names:
-                    if (i,bname) in assign and (j,bname) in assign:
-                        model.Add(assign[(i,bname)] + assign[(j,bname)] <= 1)
+                    if (cname1,bname) in assign and (cname2,bname) in assign:
+                        model.Add(assign[(cname1,bname)] + assign[(cname2,bname)] <= 1)
                 case_clashes.add((case1["name"], case2["name"]))
 
 
@@ -214,9 +217,10 @@ def setup_model(
 
         offset = 0
         for i, case in enumerate(cases):
-            if (i, bname) not in assign: # case not feasible for barrister
+            cname = case["name"]
+            if (cname, bname) not in assign: # case not feasible for barrister
                 continue
-            present.append(assign[(i, bname)])
+            present.append(assign[(cname, bname)])
             offset += 1
             viable_cases[mandatory_nums+offset] = case
 
@@ -261,17 +265,18 @@ def setup_model(
         # travel arcs for each event and the following event (if no mandatories are skipped)
         for j in range(mandatory_nums+1, mandatory_nums+offset):
             case1 = viable_cases[j]
-            case2 = viable_cases[j+1]
-            if (case1["name"], case2["name"]) in case_clashes:
-                continue
-            if not skips_mandatory_block(bname, case1["time"]+case1["duration"], case2["time"]):
-                x = model.NewBoolVar(f"arc__{bname}__{j}_to_{j+1}")
-                outgoing[j].append(x)
-                incoming[j+1].append(x)
+            for k in range(j+1, mandatory_nums+offset+1):
+                case2 = viable_cases[k]
+                if (case1["name"], case2["name"]) in case_clashes:
+                    continue
+                if not skips_mandatory_block(bname, case1["time"]+case1["duration"], case2["time"]):
+                    x = model.NewBoolVar(f"arc__{bname}__{j}_to_{k}")
+                    outgoing[j].append(x)
+                    incoming[k].append(x)
 
-                tcost = travel(case1["location"], case2["location"])
+                    tcost = travel(case1["location"], case2["location"])
 
-                all_travel_arc_terms.append(tcost * x)
+                    all_travel_arc_terms.append(tcost * x)
 
 
         # Ensure start has exactly 1 outgoing, end has exactly 1 incoming
@@ -306,11 +311,11 @@ def setup_model(
     cost_terms = []
     for i, case in enumerate(cases):
         cname = case["name"]
-        cost_terms.append(unassigned_penalty * unassigned[i])
+        cost_terms.append(unassigned_penalty * unassigned[cname])
         for bname in barrister_names:
-            if (i, bname) in assign:
+            if (cname, bname) in assign:
                 cost = case_costs.get((cname, bname), 999999)
-                cost_terms.append(cost * assign[(i, bname)])
+                cost_terms.append(cost * assign[(cname, bname)])
 
     # ---- Objective: case cost + lambda * travel ----
     model.Minimize(sum(cost_terms) + lambda_travel * sum(all_travel_arc_terms))
@@ -318,10 +323,14 @@ def setup_model(
     return model, assign, unassigned, cases, schedule
 
 
-def solve_model(model, assign, unassigned, cases_sorted, schedule, *, max_time_seconds=10):
+def solve_model(model, assign, unassigned, cases, schedule, *, max_time_seconds=10):
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = max_time_seconds
     status = solver.Solve(model)
+
+    cases_by_name = {}
+    for case in cases:
+        cases_by_name[case["name"]] = case
 
     result = {
         "status": solver.StatusName(status),
@@ -337,17 +346,15 @@ def solve_model(model, assign, unassigned, cases_sorted, schedule, *, max_time_s
     assignment = {}
     unassigned_cases = []
 
-    n = len(cases_sorted)
-
-    for i in range(n):
-        if solver.Value(unassigned[i]) == 1:
-            unassigned_cases.append(i)
-
-    for (case_i, bname), var in assign.items():
+    for cname, var in unassigned.items():
         if solver.Value(var) == 1:
-            assert solver.Value(unassigned[case_i]) == 0 # ensure our solver worked correctly
-            case = cases_sorted[case_i]
-            assignment[case["name"]] = bname
+            unassigned_cases.append(cname)
+
+    for (cname, bname), var in assign.items():
+        if solver.Value(var) == 1:
+            assert solver.Value(unassigned[cname]) == 0 # ensure our solver worked correctly
+            case = cases_by_name[cname]
+            assignment[cname] = bname
             schedule[bname].append([case["time"], case["time"]+case["duration"], case["location"], case["name"]])
 
     for bschedule in schedule.values():

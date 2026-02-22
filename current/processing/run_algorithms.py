@@ -140,14 +140,14 @@ def generate_schedule(cases, barristers, travel_times,
         #print(output)
         #output["fairness"] = evaluate(barristers, travel_times, result["schedule"])
 
-    elif method == "backtrack":
+    elif method == "backtrack_optimized":
         
         domains, constraints, timelines, timelines_starts = define_inputs(cases_sorted, barristers, travel_times)
     
         tracemalloc.start()
         start_time = time.time()
 
-        solution, cost, schedules = branch_and_bound(
+        solution, cost, schedules = branch_and_bound_optimized(
             cases,
             timelines,
             timelines_starts,
@@ -168,6 +168,34 @@ def generate_schedule(cases, barristers, travel_times,
         output["runtime"] = end_time - start_time
         output["memory"] = peak / 10**6
         #output["fairness"] = evaluate(cases_sorted, barristers, best_sol())
+
+    elif method == "backtrack_naive":
+
+        domains, constraints, timelines, timelines_starts = define_inputs(cases_sorted, barristers, travel_times)
+    
+        tracemalloc.start()
+        start_time = time.time()
+
+        solution, cost, schedules = branch_and_bound_naive(
+            cases,
+            timelines,
+            timelines_starts,
+            travel_times,
+            case_costs,
+            domains,
+            constraints,
+        )
+
+
+        end_time = time.time()
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+
+        output["result"] = solution
+        output["schedule"] = schedules
+        output["score"] = cost
+        output["runtime"] = end_time - start_time
+        output["memory"] = peak / 10**6
 
 
     elif method == "greedy":

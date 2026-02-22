@@ -13,19 +13,19 @@ def main():
 
     parser.add_argument(
         "--barristers",
-        default=[10],
+        default=[9],
         help="Number of barristers",
     )
 
     parser.add_argument(
         "--cases",
-        default=[10],
+        default=[9],
         help="Number of cases",
     )
 
     parser.add_argument(
         "--locations",
-        default=[5],
+        default=[3],
         help="Number of locations",
     )
 
@@ -49,7 +49,7 @@ def main():
 
     args = parser.parse_args()
     length = len(args.barristers)
-    solvers = ["ortools", "backtrack", "greedy"]
+    solvers = ["ortools", "backtrack_optimized", "greedy"]
     experiments = []
     for i in range(length):
 
@@ -92,6 +92,14 @@ def main():
         for key in experiment.keys():
             print(key)
             print(experiment[key]["score"])
+            cases = []
+            for case in experiment[key]["result"].keys():
+                cases.append((case, experiment[key]["result"][case]))
+
+            cases.sort()
+            print(cases)
+
+
 
     #plot_graph(experiments, args.output)
 

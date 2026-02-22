@@ -107,6 +107,8 @@ def greedy(
     for barrister in barristers:
         bname = barrister["name"]
         b_base = base[bname]
+        #total_score += travel(barrister["home"], b_base[0].location)
+        #total_score += travel(b_base[-1].location, barrister["home"])
         for i in range(len(b_base)-1):
             total_score += travel(b_base[i].location, b_base[i+1].location)
 
@@ -123,7 +125,7 @@ def greedy(
                 bname = barrister["name"]
                 delta, idx = feasible(case, base[bname], base_starts[bname])
 
-                if delta:
+                if delta is not None:
 
                     if case_costs[(cname, bname)] < best:
                         best = case_costs[(cname, bname)]

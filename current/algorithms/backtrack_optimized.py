@@ -98,7 +98,7 @@ def lower_bound_case_cost_only(remaining_cases, domains, cost_lookup):
         bnd += min(cost_lookup[(case, b)] for b in domains[case])
     return bnd
 
-def branch_and_bound(
+def branch_and_bound_optimized(
     cases,
     timelines,
     timelines_starts,
@@ -182,9 +182,11 @@ def branch_and_bound(
 
             assignment[cname] = b
             # remove b from domains of conflicting cases
+            removed = []
             for neighbour in neighbours[cname]:
                 if b in domains[neighbour]:
                     domains[neighbour].remove(b)
+                    removed.append(neighbour)
 
 
             inserted = False
@@ -193,6 +195,7 @@ def branch_and_bound(
                 c = cases_by_name[cname]
                 ev = Event(c["time"], c["time"] + c["duration"], c["location"], "CASE")
                 timelines[b].insert(idx, ev)
+                timelines_starts[b].insert(idx, c["time"])
                 inserted = True
 
             dfs(rem_cases - {cname}, new_cost)
@@ -200,8 +203,9 @@ def branch_and_bound(
             # undo
             if inserted:
                 timelines[b].pop(idx)
+                timelines_starts[b].pop(idx)
 
-            for neighbour in neighbours[cname]:
+            for neighbour in removed:
                 domains[neighbour].add(b)
 
             del assignment[cname]

@@ -88,19 +88,9 @@ def case_insert_cost(
     delta = t_prev + t_next - t_prev_next
     return delta, idx
 
-def lower_bound_case_cost_only(remaining_cases, domains, cost_lookup):
-    """
-    Safe bound: ignore travel, sum min assignment cost over remaining cases.
-    cost_lookup[(case,b)] must exist for b in domains[case].
-    """
-    bnd = 0
-    for case in remaining_cases:
-        bnd += min(cost_lookup[(case, b)] for b in domains[case])
-    return bnd
 
 def branch_and_bound_naive(
     cases,
-    barristers,
     timelines,
     timelines_starts,
     travel_times,
@@ -119,9 +109,9 @@ def branch_and_bound_naive(
     cases_by_name = {c["name"]: c for c in cases}
 
     # Add UNASSIGNED option to every domain (if not already)
-    for cname in domains:
-        domains[cname].add(UNASSIGNED)
-        case_costs[(cname, UNASSIGNED)] = unassigned_penalty
+    #for cname in domains:
+        #domains[cname].add(UNASSIGNED)
+        #case_costs[(cname, UNASSIGNED)] = unassigned_penalty
 
     neighbours = {c["name"]: set() for c in cases}
     if constraints:
@@ -136,9 +126,9 @@ def branch_and_bound_naive(
     assignment = {}
     remaining = set(domains.keys())
 
-
     def dfs(rem_cases, current_cost):
         nonlocal best_solution, best_cost
+        print(best_cost)
 
         if not rem_cases:
             if current_cost < best_cost:
@@ -147,35 +137,49 @@ def branch_and_bound_naive(
             return
 
         for cname in rem_cases:
-            for barrister in barristers:
+            case = cases_by_name[cname]
+            for bname in domains[cname]:
                     
+                delta, idx = case_insert_cost(case, timelines[bname], timelines_starts[bname], travel_times)
+                inc = delta + case_costs[(cname, bname)]
                 new_cost = current_cost + inc
-                if new_cost >= best_cost:
-                    break  # candidates sorted by inc
+                if new_cost >= best_cost: # skip early if already bad solution
+                    continue
 
-                assignment[cname] = b
-                # remove b from domains of conflicting cases
+                assignment[cname] = bname
+                # remove barrister from domains of conflicting cases
+                removed = []
                 for neighbour in neighbours[cname]:
-                    domains[neighbour].remove(b)
+                    if bname in domains[neighbour]:
+                        domains[neighbour].remove(bname)
+                        removed.append(neighbour)
 
 
                 inserted = False
-                if b != UNASSIGNED:
+                if bname != UNASSIGNED:
                     # insert event
                     c = cases_by_name[cname]
-                    ev = Event(c["time"], c["time"] + c["duration"], c["location"], "CASE")
-                    timelines[b].insert(idx, ev)
+                    ev = Event(case["time"], case["time"] + case["duration"], case["location"], cname)
+                    timelines[bname].insert(idx, ev)
+                    timelines_starts[bname].insert(idx, case["time"])
                     inserted = True
 
                 dfs(rem_cases - {cname}, new_cost)
 
                 # undo
                 if inserted:
-                    timelines[b].pop(idx)
+                    timelines[bname].pop(idx)
+                    timelines_starts[bname].pop(idx)
 
-                for neighbour in neighbours[cname]:
-                    domains[neighbour].add(b)
+                for neighbour in removed:
+                    domains[neighbour].add(bname)
 
+                del assignment[cname]
+
+            new_cost = current_cost + unassigned_penalty
+            if new_cost < best_cost:
+                assignment[cname] = UNASSIGNED
+                dfs(rem_cases - {cname}, new_cost)
                 del assignment[cname]
 
     dfs(remaining, calculate_initial_cost(timelines, travel_times))

@@ -274,17 +274,17 @@ def generate_test_instance_base_only(
     def sample_seniority() -> int:
         # Adjust distribution if you want more/less high seniority barristers
         if constrainedness < 0.35:
-            return rng.choices([1, 2, 3], weights=[0.55, 0.35, 0.10])[0]
+            return rng.choices([1, 2, 3], weights=[0.25, 0.30, 0.45])[0]
         elif constrainedness < 0.70:
-            return rng.choices([1, 2, 3], weights=[0.35, 0.45, 0.20])[0]
+            return rng.choices([1, 2, 3], weights=[0.35, 0.35, 0.30])[0]
         else:
-            return rng.choices([1, 2, 3], weights=[0.25, 0.45, 0.30])[0]
+            return rng.choices([1, 2, 3], weights=[0.45, 0.35, 0.20])[0]
         
     def sample_experience():
         return rng.choices(range(30))[0]
 
     def sample_expertise():
-        num = rng.choices([2, 3, 4], weights=[0.3, 0.4, 0.3])[0] # will have between 2 - 4 expertises
+        num = rng.choices([1, 2, 3], weights=[0.3, 0.4, 0.3])[0] # will have between 2 - 4 expertises
         fields = ["Criminal", "Family" "Civil", "Commercial", "Employment", "Housing", "Immigration",
                   "Personal Injury", "Wills", "Property", "Tax", "Intellectual Property"]
         
@@ -293,8 +293,6 @@ def generate_test_instance_base_only(
     
     def sample_winrate():
         return round(((random.random() + random.random() + random.random()) / 3), 2)
-
-
 
     # --- build barristers + mandatory schedules ---
     barristers: List[dict] = []
@@ -559,3 +557,146 @@ def generate_test_case(num_barristers, num_cases, num_locations, constrainedness
     print(travel_times)
 
     return barristers, cases, travel_times
+
+
+CASE_TYPES = [
+    "Criminal", "Family", "Civil", "Commercial", "Employment", "Housing",
+    "Immigration", "Personal Injury", "Wills", "Property", "Tax",
+    "Intellectual Property"
+]
+
+
+
+
+def estimate_available_minutes(barristers: List[dict]) -> int:
+    """
+    Rough capacity estimate ignoring travel:
+    total working minutes - blocked minutes across all barristers.
+    """
+    total = 0
+    for b in barristers:
+        day_len = b["day_end"] - b["day_start"]
+        blocked = sum(blk["end_time"] - blk["start_time"] for blk in b.get("schedule", []))
+        total += max(0, day_len - blocked)
+    return total
+
+
+def suggest_num_cases_for_load(
+    barristers: List[dict],
+    *,
+    target_load: float,
+    avg_case_duration: int = 45,
+) -> int:
+    """
+    target_load = desired ratio of total case minutes / available barrister minutes.
+    Example:
+      0.4 easy
+      0.7 moderate
+      0.9 hard
+      1.1 very hard / likely unassigneds
+    """
+    avail = estimate_available_minutes(barristers)
+    target_case_minutes = target_load * avail
+    return max(1, int(round(target_case_minutes / avg_case_duration)))
+
+
+def generate_cases_simple(
+    *,
+    barristers: List[dict],
+    locations: List[str],
+    num_cases: int,
+    seed: int = 0,
+    constrainedness: float = 0.5,  # 0 easy -> 1 hard
+    phase: str = "phase_transition",  # "easy" | "phase_transition" | "hard"
+    time_step: int = 5,
+) -> Tuple[List[dict], Dict[Tuple[str, str], int]]:
+    """
+    Generates random cases (not guaranteed fully assignable).
+    Constrainedness controls:
+      - duration lengths
+      - time clustering
+      - seniority pressure
+    """
+    rng = random.Random(seed)
+    constrainedness = max(0.0, min(1.0, constrainedness))
+
+    day_start = min(b["day_start"] for b in barristers)
+    day_end = max(b["day_end"] for b in barristers)
+
+    def round_to_step(t: int) -> int:
+        return int(time_step * round(t / time_step))
+
+    # ---------------------------
+    # Hardness controls
+    # ---------------------------
+    # More constrained => longer durations
+    def sample_duration() -> int:
+        if constrainedness < 0.35:
+            return rng.choice([20, 25, 30, 35, 40, 45])
+        elif constrainedness < 0.70:
+            return rng.choice([25, 30, 35, 40, 45, 60])
+        else:
+            return rng.choice([30, 40, 45, 60, 75, 90])
+
+    # More constrained => more higher-seniority cases
+    def sample_case_seniority() -> int:
+        if constrainedness < 0.35:
+            return rng.choices([1, 2, 3], weights=[0.75, 0.22, 0.03])[0]
+        elif constrainedness < 0.70:
+            return rng.choices([1, 2, 3], weights=[0.55, 0.30, 0.15])[0]
+        else:
+            return rng.choices([1, 2, 3], weights=[0.35, 0.40, 0.25])[0]
+
+    # Time clustering: hard instances cluster more
+    if phase == "easy":
+        cluster_strength = 0.20 + 0.30 * constrainedness
+    elif phase == "hard":
+        cluster_strength = 0.60 + 0.30 * constrainedness
+    else:  # phase_transition
+        cluster_strength = 0.40 + 0.35 * constrainedness
+
+    # Peak times (e.g. common court hearing slots)
+    peak_centers = [
+        day_start + int(0.20 * (day_end - day_start)),
+        day_start + int(0.45 * (day_end - day_start)),
+        day_start + int(0.70 * (day_end - day_start)),
+    ]
+
+    def sample_start_time() -> int:
+        if rng.random() < cluster_strength:
+            center = rng.choice(peak_centers)
+            spread = int((1.0 - constrainedness) * 90 + 20)  # minutes
+            t = center + rng.randint(-spread, spread)
+        else:
+            t = rng.randint(day_start, day_end)
+        return round_to_step(max(day_start, min(day_end, t)))
+
+    def sample_case_type() -> str:
+        return rng.choice(CASE_TYPES)
+
+    def sample_severity() -> bool:
+        # You can tune this too if you want "harder" quality-matching problems
+        return rng.choices([True, False], weights=[0.35, 0.65])[0]
+
+    # ---------------------------
+    # Generate cases
+    # ---------------------------
+    cases: List[dict] = []
+    for i in range(num_cases):
+        c = {
+            "name": f"C{i}",
+            "time": sample_start_time(),
+            "duration": sample_duration(),
+            "location": rng.choice(locations),
+            "seniority": sample_case_seniority(),
+            "type": sample_case_type(),
+            "severe": sample_severity(),
+        }
+        cases.append(c)
+
+    cases.sort(key=lambda x: x["time"])
+
+    # Build fit-costs separately from travel
+    case_costs = build_case_costs(cases, barristers, seed=seed + 1001)
+
+    return cases, case_costs

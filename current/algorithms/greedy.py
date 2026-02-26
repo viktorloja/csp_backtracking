@@ -117,28 +117,30 @@ def greedy(
         cname = case["name"]
         best = unassigned_penalty
         chosen_barrister = UNASSIGNED
-        curr_delta = 0
         curr_idx = None
         if cname not in assignment_fixed:
             for barrister in barristers:
 
                 bname = barrister["name"]
+                if barrister["seniority"] < case["seniority"]: # seniority check
+                    continue # if fail, next barrister
+
                 delta, idx = feasible(case, base[bname], base_starts[bname])
 
                 if delta is not None:
 
-                    if case_costs[(cname, bname)] < best:
-                        best = case_costs[(cname, bname)]
+                    if (case_costs[(cname, bname)] + delta) < best:
+                        best = case_costs[(cname, bname)] + delta
                         chosen_barrister = bname
-                        curr_delta = delta
                         curr_idx = idx
 
-            if curr_idx:
+            if curr_idx is not None:
                 event = Event(case["time"], case["time"] + case["duration"], case["location"], cname)
                 base[chosen_barrister].insert(curr_idx, event)
                 base_starts[chosen_barrister].insert(curr_idx, case["time"])
-                total_score += (curr_delta + best)
-                assignment[cname] = chosen_barrister
+
+            total_score += best
+            assignment[cname] = chosen_barrister
 
         else:
 

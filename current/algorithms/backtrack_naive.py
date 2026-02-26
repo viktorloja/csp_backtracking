@@ -1,5 +1,5 @@
 from math import inf
-from bisect import bisect_left
+from bisect import bisect_right
 from typing import NamedTuple
 
 class Event(NamedTuple):
@@ -72,7 +72,7 @@ def case_insert_cost(
     c_loc = case["location"]
 
     # find insertion point by start time
-    idx = bisect_left(timeline_starts, c_start)
+    idx = bisect_right(timeline_starts, c_start)
 
     prev_ev = timeline[idx - 1] 
     next_ev = timeline[idx]
@@ -128,7 +128,6 @@ def branch_and_bound_naive(
 
     def dfs(rem_cases, current_cost):
         nonlocal best_solution, best_cost
-        print(best_cost)
 
         if not rem_cases:
             if current_cost < best_cost:
@@ -182,8 +181,11 @@ def branch_and_bound_naive(
                 dfs(rem_cases - {cname}, new_cost)
                 del assignment[cname]
 
+            return
+
     dfs(remaining, calculate_initial_cost(timelines, travel_times))
     return best_solution, best_cost, timelines
+
 
 def case_fits(
     case,
@@ -202,15 +204,14 @@ def case_fits(
     c_end = c_start + case["duration"]
     c_loc = case["location"]
 
-    # find insertion point by start time
-    idx = bisect_left(timeline_starts, c_start)
+    # Find the rightmost mandatory event with start <= c_start
+    idx = bisect_right(timeline_starts, c_start)
 
-    prev_ev = timeline[idx - 1] if idx - 1 >= 0 else None
-    next_ev = timeline[idx] if idx < len(timeline) else None
+    if idx == 0 or idx == len(timeline):
+        return False  # outside barrister's working times
 
-    # must have prev and next because we include HOME_START and HOME_END
-    if prev_ev is None or next_ev is None:
-        return False
+    prev_ev = timeline[idx-1]
+    next_ev = timeline[idx]
 
     prev_end, prev_loc = prev_ev.end, prev_ev.location
     next_start, next_loc = next_ev.start, next_ev.location

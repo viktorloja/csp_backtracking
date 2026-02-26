@@ -13,25 +13,25 @@ def main():
 
     parser.add_argument(
         "--barristers",
-        default=[9],
+        default=[15],
         help="Number of barristers",
     )
 
     parser.add_argument(
         "--cases",
-        default=[9],
+        default=[25],
         help="Number of cases",
     )
 
     parser.add_argument(
         "--locations",
-        default=[3],
+        default=[9],
         help="Number of locations",
     )
 
     parser.add_argument(
         "--constraint",
-        default=[0.0],
+        default=[0.5],
         help="Level of constrainedness, 0.0 is least, 1.0 is most",
     )
 
@@ -49,7 +49,7 @@ def main():
 
     args = parser.parse_args()
     length = len(args.barristers)
-    solvers = ["ortools", "backtrack_optimized", "greedy"]
+    solvers = ["ortools", "backtrack_optimized", "backtrack_naive", "greedy"]
     experiments = []
     for i in range(length):
 

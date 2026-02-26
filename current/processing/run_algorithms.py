@@ -101,7 +101,9 @@ def generate_schedule(cases, barristers, travel_times,
     
     method options:
         - "ortools"
-        - "backtrack"
+        - "backtrack_optimized"
+        - "backtrack_naive"
+        - "greedy"
     """
     
     output = {}
@@ -110,6 +112,7 @@ def generate_schedule(cases, barristers, travel_times,
         case_costs = calculate_costs_balanced(cases_sorted, barristers)
     else:
         case_costs = calculate_costs_optimal(cases_sorted, barristers)
+
 
     if method == "ortools":
 

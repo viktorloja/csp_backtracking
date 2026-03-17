@@ -158,6 +158,7 @@ def branch_and_bound_optimized(
 
         if not rem_cases:
             if current_cost < best_cost:
+                print(current_cost)
                 best_cost = current_cost
                 best_solution = assignment.copy()
             return
@@ -181,16 +182,17 @@ def branch_and_bound_optimized(
                 break  # candidates sorted by inc
 
             assignment[cname] = b
-            # remove b from domains of conflicting cases
             removed = []
-            for neighbour in neighbours[cname]:
-                if b in domains[neighbour]:
-                    domains[neighbour].remove(b)
-                    removed.append(neighbour)
-
 
             inserted = False
             if b != UNASSIGNED:
+
+                # remove b from domains of conflicting case
+                for neighbour in neighbours[cname]:
+                    if b in domains[neighbour]:
+                        domains[neighbour].remove(b)
+                        removed.append(neighbour)
+                        
                 # insert event
                 c = cases_by_name[cname]
                 ev = Event(c["time"], c["time"] + c["duration"], c["location"], "CASE")

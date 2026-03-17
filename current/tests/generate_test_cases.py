@@ -25,7 +25,7 @@ def make_symmetric_travel_times(
     locations: List[str],
     coords: Dict[str, Tuple[float, float]],
     *,
-    base_minutes: int = 6,
+    base_minutes: int = 5,
     minutes_per_unit: int = 100,
     noise: float = 0.10,
     seed: int = 0,
@@ -54,7 +54,7 @@ def make_symmetric_travel_times(
         for b in locations[i + 1:]:
             d = euclid(a, b)
             t = base_minutes + minutes_per_unit * d
-            t *= (1.0 + rng.uniform(-noise, noise))  # random variation
+            #t *= (1.0 + rng.uniform(-noise, noise))  # random variation
             t = max(1, int(round(t)))
 
             # symmetry enforced
@@ -114,7 +114,7 @@ def generate_travel_feasible_blocks_for_barrister(
     durations: List[int] = []
     remaining = target_blocked
     for _ in range(num_blocks):
-        if remaining <= 0:
+        if remaining <= 15:
             break
         dur = rng.randint(15, min(120, remaining))
         remaining -= dur
@@ -221,8 +221,11 @@ def generate_travel_feasible_blocks_for_barrister(
 # 3) FULL INSTANCE GENERATOR (BARRISTERS + FEASIBLE MANDATORY SCHEDULES)
 # ============================================================
 
-def generate_test_instance_base_only(
-    *,
+fields = ["Criminal", "Fraud", "Family" "Civil", "Commercial", "Employment", "Housing", "Immigration",
+            "Personal Injury", "Wills", "Property", "Tax", "Intellectual Property"]
+       
+
+def generate_barristers_travel_times(
     num_barristers: int = 20,
     num_locations: int = 12,
     seed: int = 0,
@@ -284,10 +287,7 @@ def generate_test_instance_base_only(
         return rng.choices(range(30))[0]
 
     def sample_expertise():
-        num = rng.choices([1, 2, 3], weights=[0.3, 0.4, 0.3])[0] # will have between 2 - 4 expertises
-        fields = ["Criminal", "Family" "Civil", "Commercial", "Employment", "Housing", "Immigration",
-                  "Personal Injury", "Wills", "Property", "Tax", "Intellectual Property"]
-        
+        num = rng.choices([1, 2, 3], weights=[0.3, 0.4, 0.3])[0] # will have between 1 - 3 expertises 
         expertises = random.sample(fields, num)  
         return expertises
     
@@ -329,244 +329,7 @@ def generate_test_instance_base_only(
     return barristers, travel_times, locations
 
 
-# ============================================================
-# 4) CASE GENERATION (OPTIONAL GUARANTEED FEASIBLE ASSIGNMENT)
-# ============================================================
-
-def generate_cases(
-    *,
-    num_cases: int,
-    barristers: List[dict],
-    locations: List[str],
-    travel_times: Dict[Tuple[str, str], int],
-    seed: int = 0,
-    time_step: int = 5,
-    constrainedness: float = 0.5,          # 0 easy -> 1 tight
-    phase: str = "phase_transition",       # "easy" | "phase_transition" | "hard"
-    guarantee_feasible: bool = True,
-    unassigned_penalty: int = 10_000,
-    max_restarts: int = 60,
-) -> Tuple[List[dict], Dict[Tuple[str, str], int], Optional[Dict[str, str]]]:
-    """
-    Generates a list of case dicts compatible with your solvers:
-      {"name","time","duration","location","seniority"}
-
-    Also generates case_costs[(case_name, barrister_name)] (fit/mismatch costs).
-
-    If guarantee_feasible=True:
-      - tries to CONSTRUCT a feasible solution with no unassigned cases
-      - returns (cases, case_costs, ground_truth_assignment)
-
-    If guarantee_feasible=False:
-      - generates cases randomly (may be infeasible / require unassignments)
-      - returns (cases, case_costs, None)
-
-    Notes:
-    - This uses the barristers' existing mandatory schedules (their "schedule" blocks),
-      and ensures cases don't violate travel feasibility when inserted (in construction mode).
-    - Travel times assumed symmetric + complete (travel_times[(a,b)] exists for all pairs).
-    """
-
-    rng = random.Random(seed)
-    constrainedness = max(0.0, min(1.0, constrainedness))
-
-    day_start = min(b["day_start"] for b in barristers)
-    day_end = max(b["day_end"] for b in barristers)
-
-    def round_to_step(t: int) -> int:
-        return int(time_step * round(t / time_step))
-
-    def T(a: str, b: str) -> int:
-        return travel_times[(a, b)]
-
-    # ------------------------------
-    # distributions / hardness knobs
-    # ------------------------------
-    # durations: more constrained -> longer
-    def sample_duration() -> int:
-        if constrainedness < 0.4:
-            return rng.choice([20, 25, 30, 35, 40, 45])
-        elif constrainedness < 0.75:
-            return rng.choice([25, 30, 35, 40, 45, 60])
-        else:
-            return rng.choice([30, 40, 45, 60, 75, 90])
-
-    # case seniority requirement: more constrained -> more higher requirements
-    def sample_case_seniority() -> int:
-        if constrainedness < 0.35:
-            return rng.choices([1, 2, 3], weights=[0.70, 0.25, 0.05])[0]
-        elif constrainedness < 0.70:
-            return rng.choices([1, 2, 3], weights=[0.50, 0.35, 0.15])[0]
-        else:
-            return rng.choices([1, 2, 3], weights=[0.35, 0.40, 0.25])[0]
-
-    # how clustered start times are: hard -> more clustering -> more conflicts
-    if phase == "easy":
-        time_spread = 1.0
-    elif phase == "hard":
-        time_spread = 0.35
-    else:
-        time_spread = 0.55
-
-    def sample_start_time() -> int:
-        # cluster around midday when time_spread is small
-        mid = (day_start + day_end) / 2
-        half = (day_end - day_start) / 2
-        z = (rng.random() + rng.random() + rng.random()) / 3  # ~0..1
-        z = (0.5 * (1 - time_spread)) + (z * time_spread)
-        t = int(round(mid + (z - 0.5) * (2 * half)))
-        return round_to_step(max(day_start, min(day_end, t)))
-    
-    def sample_case_type():
-        fields = ["Criminal", "Family" "Civil", "Commercial", "Employment", "Housing", "Immigration",
-                  "Personal Injury", "Wills", "Property", "Tax", "Intellectual Property"]
-        
-        type = random.sample(fields, 1)[0] 
-        return type
-
-
-    def sample_severity():
-         return rng.choices([True, False], weights=[0.40, 0.60])[0]
-
-
-    # ------------------------------
-    # Build mandatory event lists we can insert into
-    # ------------------------------
-    def build_events_for(b: dict) -> List[dict]:
-        home = b["home"]
-        evs = [{"start": b["day_start"], "end": b["day_start"], "location": home, "kind": "HOME_START"}]
-        for blk in sorted(b.get("schedule", []), key=lambda x: x["start_time"]):
-            evs.append({"start": blk["start_time"], "end": blk["end_time"], "location": blk.get("location", home), "kind": "BLOCK"})
-        evs.append({"start": b["day_end"], "end": b["day_end"], "location": home, "kind": "HOME_END"})
-        return evs
-
-    # feasibility check for inserting a case between adjacent events (by time)
-    def fits_between(prev_ev: dict, next_ev: dict, case: dict) -> bool:
-        s = case["time"]
-        e = s + case["duration"]
-        loc = case["location"]
-
-        if not (prev_ev["end"] <= s and e <= next_ev["start"]):
-            return False
-        if prev_ev["end"] + T(prev_ev["location"], loc) > s:
-            return False
-        if e + T(loc, next_ev["location"]) > next_ev["start"]:
-            return False
-        return True
-
-    def insert_case_into_events(events: List[dict], case: dict) -> bool:
-        # find insertion point by start time
-        s = case["time"]
-        i = 0
-        while i < len(events) and events[i]["start"] <= s:
-            i += 1
-        if i <= 0 or i >= len(events):
-            return False
-        prev_ev = events[i - 1]
-        next_ev = events[i]
-        if not fits_between(prev_ev, next_ev, case):
-            return False
-        events.insert(i, {"start": s, "end": s + case["duration"], "location": case["location"], "kind": "CASE", "case_name": case["name"]})
-        return True
-
-    # ------------------------------
-    # Construction loop (for guaranteed feasible instances)
-    # ------------------------------
-    for attempt in range(max_restarts):
-        true_events = {b["name"]: build_events_for(b) for b in barristers}
-        ground_truth: Dict[str, str] = {}
-        cases: List[dict] = []
-        ok = True
-
-        for i in range(num_cases):
-            c = {
-                "name": f"C{i}",
-                "location": rng.choice(locations),
-                "duration": sample_duration(),
-                "seniority": sample_case_seniority(),
-                "time": sample_start_time(),
-                "type": sample_case_type(),
-                "severe": sample_severity(),
-            }
-
-            if guarantee_feasible:
-                eligible = [b for b in barristers if b["seniority"] >= c["seniority"]]
-                rng.shuffle(eligible)
-
-                placed = False
-                # try multiple time/location tweaks to find a feasible insertion
-                for _ in range(120):
-                    c["time"] = sample_start_time()
-                    # optional: slightly bias location toward some eligible barrister homes to increase success rate
-                    if rng.random() < 0.20:
-                        c["location"] = rng.choice([b["home"] for b in eligible]) if eligible else c["location"]
-
-                    rng.shuffle(eligible)
-                    for b in eligible:
-                        if insert_case_into_events(true_events[b["name"]], c):
-                            ground_truth[c["name"]] = b["name"]
-                            placed = True
-                            break
-                    if placed:
-                        break
-
-                if not placed:
-                    ok = False
-                    break
-
-            cases.append(c)
-
-        if not ok:
-            # restart with a different RNG stream so we don't get stuck in same patterns
-            rng.seed(seed + 999 + attempt * 17)
-            continue
-
-        cases.sort(key=lambda x: x["time"])
-
-      
-        return cases, (ground_truth if guarantee_feasible else None)
-
-    raise RuntimeError(
-        f"Failed to generate cases after {max_restarts} restarts. "
-        f"Try lowering constrainedness or reducing num_cases, or set guarantee_feasible=False."
-    )
-
-
-
-def generate_test_case(num_barristers, num_cases, num_locations, constrainedness):
-    barristers, travel_times, locations = generate_test_instance_base_only(
-        num_barristers=num_barristers,
-        num_locations=num_locations,
-        constrainedness=constrainedness,
-        phase="phase_transition",
-        seed=42
-    )
-
-    cases, gt = generate_cases(
-        num_cases=num_cases,
-        barristers=barristers,
-        locations=locations,
-        travel_times=travel_times,
-        constrainedness=constrainedness,
-        phase="phase_transition",
-        guarantee_feasible=True,
-        seed=99
-    )
-    print(barristers)
-    print(cases)
-    print(travel_times)
-
-    return barristers, cases, travel_times
-
-
-CASE_TYPES = [
-    "Criminal", "Family", "Civil", "Commercial", "Employment", "Housing",
-    "Immigration", "Personal Injury", "Wills", "Property", "Tax",
-    "Intellectual Property"
-]
-
-
-
+#4 CASES
 
 def estimate_available_minutes(barristers: List[dict]) -> int:
     """
@@ -581,11 +344,10 @@ def estimate_available_minutes(barristers: List[dict]) -> int:
     return total
 
 
-def suggest_num_cases_for_load(
+def suggest_num_cases(
     barristers: List[dict],
-    *,
     target_load: float,
-    avg_case_duration: int = 45,
+    constrainedness: float = 0.5,
 ) -> int:
     """
     target_load = desired ratio of total case minutes / available barrister minutes.
@@ -597,11 +359,11 @@ def suggest_num_cases_for_load(
     """
     avail = estimate_available_minutes(barristers)
     target_case_minutes = target_load * avail
+    avg_case_duration = 30 + (constrainedness * 30)
     return max(1, int(round(target_case_minutes / avg_case_duration)))
 
 
-def generate_cases_simple(
-    *,
+def generate_cases(
     barristers: List[dict],
     locations: List[str],
     num_cases: int,
@@ -672,7 +434,7 @@ def generate_cases_simple(
         return round_to_step(max(day_start, min(day_end, t)))
 
     def sample_case_type() -> str:
-        return rng.choice(CASE_TYPES)
+        return rng.choice(fields)
 
     def sample_severity() -> bool:
         # You can tune this too if you want "harder" quality-matching problems
@@ -696,7 +458,18 @@ def generate_cases_simple(
 
     cases.sort(key=lambda x: x["time"])
 
-    # Build fit-costs separately from travel
-    case_costs = build_case_costs(cases, barristers, seed=seed + 1001)
+    return cases
 
-    return cases, case_costs
+def generate_test_case(num_barristers, num_locations, constrainedness, target_load, phase):
+
+    barristers, travel_times, locations = generate_barristers_travel_times(num_barristers, num_locations, constrainedness=constrainedness, phase=phase)
+    print(barristers)
+    print(travel_times)
+    print(locations)
+    num_cases = suggest_num_cases(barristers, target_load, constrainedness=constrainedness)
+    print(num_cases)
+    cases = generate_cases(barristers, locations, num_cases, constrainedness=constrainedness, phase=phase)
+    print(cases)
+
+    return barristers, cases, travel_times
+  

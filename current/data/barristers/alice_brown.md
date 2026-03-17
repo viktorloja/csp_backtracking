@@ -1,7 +1,8 @@
 ---
 name: Alice Brown
-seniority: 3
 home: London
+seniority: 3
+experience: 2
 expertise: [criminal, fraud, appeals]
 schedule:
   - start_time: 900

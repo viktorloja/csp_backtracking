@@ -13,26 +13,32 @@ def main():
 
     parser.add_argument(
         "--barristers",
-        default=[15],
+        default=[8],
         help="Number of barristers",
     )
 
     parser.add_argument(
-        "--cases",
-        default=[25],
-        help="Number of cases",
+        "--load",
+        default=[0.3],
+        help="The desired ratio of total case minutes / available barrister minutes, e.g. 0.4 = easy, 0.7 = moderate, 0.9 = hard, 1.1 = very hard",
     )
 
     parser.add_argument(
         "--locations",
-        default=[9],
+        default=[4],
         help="Number of locations",
     )
 
     parser.add_argument(
         "--constraint",
-        default=[0.5],
+        default=[0.2],
         help="Level of constrainedness, 0.0 is least, 1.0 is most",
+    )
+
+    parser.add_argument(
+        "--phase",
+        default=["phase_transition"],
+        help="Phase of difficulty, e.g. easy, phase_transition, hard",
     )
 
     parser.add_argument(
@@ -49,12 +55,14 @@ def main():
 
     args = parser.parse_args()
     length = len(args.barristers)
-    solvers = ["ortools", "backtrack_optimized", "backtrack_naive", "greedy"]
+    #solvers = ["ortools", "backtrack_optimized", "backtrack_naive", "greedy"]
+    solvers = ["ortools", "backtrack_optimized", "greedy"]
+
     experiments = []
     for i in range(length):
 
         results = {}
-        barristers, cases, travel_times = generate_test_case(args.barristers[i], args.cases[i], args.locations[i], args.constraint[i])
+        barristers, cases, travel_times = generate_test_case(args.barristers[i], args.locations[i], args.constraint[i], args.load[i], args.phase[i])
 
         for solver in solvers:
             print(f"Running solver: "+solver)
@@ -66,6 +74,7 @@ def main():
                 travel_times=travel_times,
                 training=args.training[i],
             )
+            print(result)
 
             schedule = result["schedule"]
 

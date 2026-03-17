@@ -1,14 +1,11 @@
 ---
 name: CaseB
-case_type: criminal
+case_type: fraud
 seniority_required: 2
-time_minutes: 630
-duration_minutes: 90
+time: 630
+duration: 90
 location: Court2
-experience_required:
-  - fraud
-  - cross-examination
-risk_level: high
+severe: True
 court: Southwark Crown Court
 ---
 ## Summary

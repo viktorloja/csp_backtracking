@@ -39,3 +39,11 @@ https://www.directaccessportal.co.uk/search-barristers.html
 # optimization problem
 # group functions, e.g. processing / outputting functions
 # mention test data and relevance, compare to real court data (fixed times)
+
+# find existing scheduling tools - results into a text to show steve
+# focus on evaluation - show graphs
+# implement 1 more algo if time
+# create latex document with section headings, basic structure - (look on course webpage)
+# overleaf
+# create a visual example with UI, useful for including on the diss
+# discuss interesting scenarios with specific constraints

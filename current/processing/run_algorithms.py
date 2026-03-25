@@ -2,6 +2,7 @@ from algorithms.ortoolssolver3 import *
 from algorithms.backtrack_optimized import *
 from algorithms.greedy import greedy
 from algorithms.backtrack_naive import *
+from algorithms.local_search import local_search
 import tracemalloc
 import time
 
@@ -200,13 +201,46 @@ def generate_schedule(cases, barristers, travel_times,
         output["runtime"] = end_time - start_time
         output["memory"] = peak / 10**6
 
+    elif method == "local_search":
+
+        tracemalloc.start()
+        start_time = time.time()
+
+        solution, schedules, starts, cost = greedy(
+            cases,
+            barristers,
+            travel_times,
+            case_costs,
+            assignment_fixed = assignment_fixed
+        )
+
+        solution, schedules, cost = local_search(
+            barristers,
+            cases,
+            solution,
+            schedules,
+            starts,
+            case_costs,
+            travel_times,
+            cost
+        )
+
+        end_time = time.time()
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+
+        output["result"] = solution
+        output["schedule"] = schedules
+        output["score"] = cost
+        output["runtime"] = end_time - start_time
+        output["memory"] = peak / 10**6
 
     elif method == "greedy":
 
         tracemalloc.start()
         start_time = time.time()
 
-        solution, schedules, cost = greedy(
+        solution, schedules, starts, cost = greedy(
             cases,
             barristers,
             travel_times,

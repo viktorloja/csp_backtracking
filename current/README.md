@@ -40,6 +40,9 @@ https://www.directaccessportal.co.uk/search-barristers.html
 # group functions, e.g. processing / outputting functions
 # mention test data and relevance, compare to real court data (fixed times)
 
+
+
+
 # find existing scheduling tools - results into a text to show steve
 # focus on evaluation - show graphs
 # implement 1 more algo if time

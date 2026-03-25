@@ -155,7 +155,7 @@ def greedy(
             assignment[cname] = bname
 
 
-    return assignment, base, total_score
+    return assignment, base, base_starts, total_score
 
         
             

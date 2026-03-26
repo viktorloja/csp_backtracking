@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Barrister Schedule</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --card: #121a24;
+    --muted: #92a2b3;
+    --text: #e7eef6;
+    --border: #223041;
+    --ok: #1f7a3a;
+    --warn: #9b6b00;
+    --bad: #a33;
+  }
+  body {
+    margin: 0;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  h1 {
+    margin: 0 0 6px 0;
+    font-size: 22px;
+  }
+  .meta {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .kpi {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 8px 0 18px 0;
+  }
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .pill.ok   { border-color: rgba(31,122,58,0.6); color: #bff3cc; }
+  .pill.warn { border-color: rgba(155,107,0,0.6); color: #ffe2a6; }
+  .pill.bad  { border-color: rgba(163,51,51,0.6); color: #ffb4b4; }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  @media (min-width: 900px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  }
+  .card h2 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 12px;
+  }
+  tr.overlap td {
+    border-bottom-color: rgba(163,51,51,0.6);
+  }
+  .rowbadge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(163,51,51,0.6);
+    color: #ffb4b4;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Barrister Schedule</h1>
+  <div class="meta">Generated 2026-03-26 22:17:10</div>
+
+  <div class="kpi">
+    <span class="pill ok">Barristers: 6</span>
+    <span class="pill ok">Events: 20</span>
+    <span class="pill ok">Total time: 5.00 hrs</span>
+    <span class="pill ok">Overlaps: 0</span>
+  </div>
+<div class="grid">
+  <div class="card">
+    <h2>
+      <span>B0</span>
+      <span class="pill">3 events • 1.28 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L3</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>12:25–13:42</td>
+          <td><strong>L0</strong></td>
+          <td>BLOCKED</td>
+          <td>77 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L3</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B1</span>
+      <span class="pill">4 events • 1.32 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L1</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>09:50–10:22</td>
+          <td><strong>L1</strong></td>
+          <td>BLOCKED</td>
+          <td>32 min</td>
+        </tr>
+
+        <tr class="">
+          <td>13:00–13:47</td>
+          <td><strong>L0</strong></td>
+          <td>BLOCKED</td>
+          <td>47 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L1</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B2</span>
+      <span class="pill">4 events • 0.60 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L3</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>11:45–12:05</td>
+          <td><strong>L1</strong></td>
+          <td>BLOCKED</td>
+          <td>20 min</td>
+        </tr>
+
+        <tr class="">
+          <td>15:15–15:31</td>
+          <td><strong>L2</strong></td>
+          <td>BLOCKED</td>
+          <td>16 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L3</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B3</span>
+      <span class="pill">3 events • 0.47 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L0</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>11:35–12:03</td>
+          <td><strong>L1</strong></td>
+          <td>BLOCKED</td>
+          <td>28 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L0</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B4</span>
+      <span class="pill">4 events • 1.33 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L2</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>09:45–10:36</td>
+          <td><strong>L2</strong></td>
+          <td>BLOCKED</td>
+          <td>51 min</td>
+        </tr>
+
+        <tr class="">
+          <td>14:05–14:34</td>
+          <td><strong>L1</strong></td>
+          <td>BLOCKED</td>
+          <td>29 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L2</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B5</span>
+      <span class="pill">2 events • 0.00 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L1</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L1</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+</div></div></body></html>

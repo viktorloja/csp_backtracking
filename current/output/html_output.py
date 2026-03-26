@@ -244,8 +244,8 @@ def render_schedule_html_from_barrister_events(
       <thead>
         <tr>
           <th>Time</th>
-          <th>Event</th>
           <th>Location</th>
+          <th>Event</th>
           <th>Duration</th>
         </tr>
       </thead>

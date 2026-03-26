@@ -94,9 +94,8 @@ def frontmatter_to_case(front: Dict[str, Any], body: str, file_path: str) -> Dic
         "duration": int,    # minutes
         "location": str,
         "seniority": int,   # required seniority
-        "case_type": str,
-        "experience_required": [str...],
-        "notes": str
+        "type": str,
+        "severe": bool
       }
     """
     name = str(_require(front, "name", file_path))

@@ -9,6 +9,7 @@ from processing.run_algorithms import calculate_costs_optimal, calculate_costs_b
 from algorithms.greedy import build_base_timelines, Event, greedy
 from algorithms.backtrack_naive import case_fits, case_insert_cost, travel, calculate_initial_cost, branch_and_bound_naive, define_inputs as define_inputs_naive
 from algorithms.backtrack_optimized import branch_and_bound_optimized, define_inputs as define_inputs_opt
+from algorithms.local_search import local_search
 
 class TestCostCalculations(unittest.TestCase):
     def setUp(self):
@@ -224,14 +225,14 @@ class TestFullAlgorithms(unittest.TestCase):
         self.case_costs = {("C1", "B1"): 10, ("C1", "UNASSIGNED"): 1000}
 
     def test_greedy_assigns(self):
-        assignment, _, _ = greedy(
+        assignment, _, _, _ = greedy(
             self.cases, self.barristers, self.travel_times, self.case_costs, {}
         )
         self.assertEqual(assignment["C1"], "B1")
 
     def test_greedy_seniority_check(self):
         self.cases[0]["seniority"] = 3 # Higher than B1 (2)
-        assignment, _, _ = greedy(
+        assignment, _, _, _ = greedy(
             self.cases, self.barristers, self.travel_times, self.case_costs, {}
         )
         self.assertEqual(assignment["C1"], "UNASSIGNED")
@@ -249,6 +250,69 @@ class TestFullAlgorithms(unittest.TestCase):
             self.cases, timelines, starts, self.travel_times, self.case_costs, domains, constraints
         )
         self.assertEqual(sol["C1"], "B1")
+
+    def test_backtracking_returns_schedule_with_assigned_case(self):
+        domains, constraints, timelines, starts = define_inputs_naive(self.cases, self.barristers, self.travel_times)
+        sol, _, best_timelines = branch_and_bound_naive(
+            self.cases, timelines, starts, self.travel_times, self.case_costs, domains, constraints
+        )
+
+        assigned_events = [event.name for event in best_timelines["B1"]]
+        self.assertEqual(sol["C1"], "B1")
+        self.assertIn("C1", assigned_events)
+
+
+class TestLocalSearchRegressions(unittest.TestCase):
+    def test_local_search_does_not_swap_into_seniority_violation(self):
+        barristers = [
+            {"name": "B1", "home": "A", "day_start": 0, "day_end": 200, "seniority": 1},
+            {"name": "B2", "home": "B", "day_start": 0, "day_end": 200, "seniority": 3},
+        ]
+        cases = [
+            {"name": "C1", "time": 10, "duration": 10, "location": "B", "seniority": 1},
+            {"name": "C2", "time": 30, "duration": 10, "location": "A", "seniority": 3},
+        ]
+        assignments = {"C1": "B1", "C2": "B2"}
+        timelines = {
+            "B1": [
+                Event(0, 0, "A", "HOME_START"),
+                Event(10, 20, "B", "C1"),
+                Event(200, 200, "A", "HOME_END"),
+            ],
+            "B2": [
+                Event(0, 0, "B", "HOME_START"),
+                Event(30, 40, "A", "C2"),
+                Event(200, 200, "B", "HOME_END"),
+            ],
+        }
+        timeline_starts = {"B1": [0, 10, 200], "B2": [0, 30, 200]}
+        travel_times = {
+            ("A", "A"): 0,
+            ("B", "B"): 0,
+            ("A", "B"): 100,
+            ("B", "A"): 100,
+        }
+        case_costs = {
+            ("C1", "B1"): 0,
+            ("C1", "B2"): -250,
+            ("C2", "B1"): -250,
+            ("C2", "B2"): 0,
+        }
+
+        new_assignments, _, new_score = local_search(
+            barristers,
+            cases,
+            assignments,
+            timelines,
+            timeline_starts,
+            case_costs,
+            travel_times,
+            current_score=400,
+        )
+
+        self.assertEqual(new_assignments["C1"], "B1")
+        self.assertEqual(new_assignments["C2"], "B2")
+        self.assertEqual(new_score, 400)
 
 if __name__ == '__main__':
     unittest.main()

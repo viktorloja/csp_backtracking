@@ -1,6 +1,7 @@
 from math import inf
 from bisect import bisect_right
 from typing import NamedTuple
+import time
 
 class Event(NamedTuple):
     start: int
@@ -9,6 +10,10 @@ class Event(NamedTuple):
     name: str
 
 UNASSIGNED = "UNASSIGNED"
+
+
+def clone_timelines(timelines):
+    return {bname: timeline.copy() for bname, timeline in timelines.items()}
 
 def build_base_timelines(barristers):
     """
@@ -96,10 +101,11 @@ def branch_and_bound_naive(
     travel_times,
     case_costs,                # dict {(case_name, barrister_name): cost}
     domains,                   # dict {case_name: [barrister_names...]}            
-    constraints,        
+    constraints,
+    time_limit_s=10,      
     *,
     lambda_travel=1.0,
-    unassigned_penalty=10_000,
+    unassigned_penalty=10000,
 ):
     """
     Returns best_solution, best_cost.
@@ -121,23 +127,38 @@ def branch_and_bound_naive(
 
     best_solution = None
     best_cost = inf
+    best_timelines = None
+    
+    start = time.monotonic()
+    deadline = start + time_limit_s
+
+    def timed_out():
+        return time.monotonic() >= deadline
 
     # mutable state during search
     assignment = {}
     remaining = set(domains.keys())
 
     def dfs(rem_cases, current_cost):
-        nonlocal best_solution, best_cost
+        nonlocal best_solution, best_cost, best_timelines
 
         if not rem_cases:
             if current_cost < best_cost:
+                #print(current_cost)
                 best_cost = current_cost
                 best_solution = assignment.copy()
+                best_timelines = clone_timelines(timelines)
+            return
+        
+        if timed_out():
             return
 
         for cname in rem_cases:
             case = cases_by_name[cname]
             for bname in domains[cname]:
+
+                if timed_out():
+                    return
                     
                 delta, idx = case_insert_cost(case, timelines[bname], timelines_starts[bname], travel_times)
                 inc = delta + case_costs[(cname, bname)]
@@ -184,7 +205,7 @@ def branch_and_bound_naive(
             return
 
     dfs(remaining, calculate_initial_cost(timelines, travel_times))
-    return best_solution, best_cost, timelines
+    return best_solution, best_cost, best_timelines
 
 
 def case_fits(

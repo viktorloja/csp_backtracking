@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-from functions.pipeline import process
+from processing.pipeline import process
 
 def main():
     parser = argparse.ArgumentParser(

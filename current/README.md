@@ -50,3 +50,9 @@ https://www.directaccessportal.co.uk/search-barristers.html
 # overleaf
 # create a visual example with UI, useful for including on the diss
 # discuss interesting scenarios with specific constraints
+
+
+# Existing tools research
+# Bar specific: tools exist for making clerking workflows more efficient and allowing diary, case management and billing all in a single integrated environment. However these are more-so diary management tools, intended to be used by clerks to speedup their workflow and have everything in a single service - there is no explicit optimisation engine, actual case assignments are still done by clerks. - BarBooks for Chambers, Barrister 365
+
+# More general optimisation tools exist, mainly intended for field service scheduling / routing. Mainly used for optimising schedules of service jobs at different job sites and assigning workers, or used for optimising routing of deliveries and fleets. These tools could be configured to work with a specific field such as barrister scheduling but would take some work and could have potential support issues for some features. - Timefold Field Service Routing, Dynamics 365 Resource Scheduling Optimization

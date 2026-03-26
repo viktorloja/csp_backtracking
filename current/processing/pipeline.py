@@ -1,7 +1,7 @@
 from md_loader import load_cases_from_folder, load_barristers_from_folder
 from llm_summary import process_folder_txt_to_md
-from functions.generate_schedule import generate_schedule
-from functions.html_output import render_schedule_html_from_barrister_events
+from run_algorithms import generate_schedule
+from output.html_output import render_schedule_html_from_barrister_events
 
 def process(
     format,

@@ -3,7 +3,7 @@ from pathlib import Path
 from tests.generate_test_cases import generate_test_case
 from processing.run_algorithms import generate_schedule
 from output.html_output import render_schedule_html_from_barrister_events
-from output.metrics_graph import plot_graph
+from output.metrics_graph import plot_graphs
 
 
 def main():
@@ -13,13 +13,13 @@ def main():
 
     parser.add_argument(
         "--barristers",
-        default=[20],
+        default=[6],
         help="Number of barristers",
     )
 
     parser.add_argument(
         "--load",
-        default=[0.4],
+        default=[0.3],
         help="The desired ratio of total case minutes / available barrister minutes, e.g. 0.4 = easy, 0.7 = moderate, 0.9 = hard, 1.1 = very hard",
     )
 
@@ -56,16 +56,24 @@ def main():
     args = parser.parse_args()
     length = len(args.barristers)
     #solvers = ["ortools", "backtrack_optimized", "backtrack_naive", "greedy"]
-    solvers = ["ortools", "local_search", "greedy"]
+    #solvers = ["ortools", "local_search", "greedy"]
+    solvers = ["ortools", "local_search", "greedy", "backtrack_optimized", "backtrack_naive"]
 
     experiments = []
+
+    plots_dir = Path(args.output + "/plots")
+    plots_dir.mkdir(parents=True, exist_ok=True)
+
+    schedules_dir = Path(args.output + "/schedules")
+    schedules_dir.mkdir(parents=True, exist_ok=True)
+
     for i in range(length):
 
         results = {}
         barristers, cases, travel_times = generate_test_case(args.barristers[i], args.locations[i], args.constraint[i], args.load[i], args.phase[i])
 
         for solver in solvers:
-            print(f"Running solver: "+solver)
+            print("Running solver: "+solver)
 
             result = generate_schedule(
                 method=solver,
@@ -74,7 +82,7 @@ def main():
                 travel_times=travel_times,
                 training=args.training[i],
             )
-            print(result)
+            #print(result)
 
             schedule = result["schedule"]
 
@@ -82,31 +90,36 @@ def main():
                 raise RuntimeError(solver+" solver returned no schedule.")
 
             # Render HTML
-            """
-
-            output_path = args.output/ (str(i)+"-"+solver+".html")
+            
+            file_name = "schedule-"+str(i)+"-"+solver+".html"
+            file_path = schedules_dir / file_name
 
             html_path = render_schedule_html_from_barrister_events(
                 schedule,
                 title="Barrister Schedule",
-                out_path=output_path,
+                out_path=file_path,
             )
 
-            print("HTML "+solver+"-schedule written to: "+output_path)
-            """
+            #print("HTML "+solver+"-schedule written to: "+html_path)
+            
             results[solver] = result
 
         experiments.append(results)
+        file_name = "plot-"+str(i)+".png"
+        file_path = plots_dir / file_name
+        plot_graphs(results, file_path)
+            
+
     for experiment in experiments:
         for key in experiment.keys():
             print(key)
             print(experiment[key]["score"])
-            cases = []
-            for case in experiment[key]["result"].keys():
-                cases.append((case, experiment[key]["result"][case]))
+            #cases = []
+            #for case in experiment[key]["result"].keys():
+            #    cases.append((case, experiment[key]["result"][case]))
 
-            cases.sort()
-            print(cases)
+            #cases.sort()
+            #print(cases)
 
 
 

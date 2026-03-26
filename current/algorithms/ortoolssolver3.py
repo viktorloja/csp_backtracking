@@ -323,7 +323,7 @@ def setup_model(
     return model, assign, unassigned, cases, schedule
 
 
-def solve_model(model, assign, unassigned, cases, schedule, *, max_time_seconds=10):
+def solve_model(model, assign, unassigned, cases, schedule, *, max_time_seconds=30):
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = max_time_seconds
     status = solver.Solve(model)

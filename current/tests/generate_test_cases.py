@@ -111,7 +111,7 @@ def generate_travel_feasible_blocks_for_barrister(
     num_blocks = rng.randint(0, max_blocks)
 
     # Split target blocked minutes into random durations
-    durations: List[int] = []
+    durations = []
     remaining = target_blocked
     for _ in range(num_blocks):
         if remaining <= 15:

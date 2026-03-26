@@ -221,7 +221,7 @@ def generate_travel_feasible_blocks_for_barrister(
 # 3) FULL INSTANCE GENERATOR (BARRISTERS + FEASIBLE MANDATORY SCHEDULES)
 # ============================================================
 
-fields = ["Criminal", "Fraud", "Family" "Civil", "Commercial", "Employment", "Housing", "Immigration",
+fields = ["Criminal", "Fraud", "Family", "Civil", "Commercial", "Employment", "Housing", "Immigration",
             "Personal Injury", "Wills", "Property", "Tax", "Intellectual Property"]
        
 
@@ -288,11 +288,11 @@ def generate_barristers_travel_times(
 
     def sample_expertise():
         num = rng.choices([1, 2, 3], weights=[0.3, 0.4, 0.3])[0] # will have between 1 - 3 expertises 
-        expertises = random.sample(fields, num)  
+        expertises = rng.sample(fields, num)
         return expertises
     
     def sample_winrate():
-        return round(((random.random() + random.random() + random.random()) / 3), 2)
+        return round(((rng.random() + rng.random() + rng.random()) / 3), 2)
 
     # --- build barristers + mandatory schedules ---
     barristers: List[dict] = []
@@ -460,15 +460,38 @@ def generate_cases(
 
     return cases
 
-def generate_test_case(num_barristers, num_locations, constrainedness, target_load, phase):
-
-    barristers, travel_times, locations = generate_barristers_travel_times(num_barristers, num_locations, constrainedness=constrainedness, phase=phase)
+def generate_test_case(
+    num_barristers,
+    num_locations,
+    constrainedness,
+    target_load,
+    phase,
+    seed: int = 0,
+):
+    """
+    Generate a fully deterministic scenario for a given seed.
+    Reusing the same seed reproduces the same barristers, travel matrix, and cases.
+    """
+    barristers, travel_times, locations = generate_barristers_travel_times(
+        num_barristers,
+        num_locations,
+        seed=seed,
+        constrainedness=constrainedness,
+        phase=phase,
+    )
     print(barristers)
     print(travel_times)
     print(locations)
     num_cases = suggest_num_cases(barristers, target_load, constrainedness=constrainedness)
     print(num_cases)
-    cases = generate_cases(barristers, locations, num_cases, constrainedness=constrainedness, phase=phase)
+    cases = generate_cases(
+        barristers,
+        locations,
+        num_cases,
+        seed=seed + 1,
+        constrainedness=constrainedness,
+        phase=phase,
+    )
     print(cases)
 
     return barristers, cases, travel_times

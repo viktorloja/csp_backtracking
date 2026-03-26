@@ -13,7 +13,7 @@ def main():
 
     parser.add_argument(
         "--barristers",
-        default=[6],
+        default=[15],
         help="Number of barristers",
     )
 
@@ -25,7 +25,7 @@ def main():
 
     parser.add_argument(
         "--locations",
-        default=[4],
+        default=[10],
         help="Number of locations",
     )
 

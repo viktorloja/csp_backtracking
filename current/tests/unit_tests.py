@@ -1,6 +1,8 @@
 import unittest
 import sys
 import os
+import io
+from contextlib import redirect_stdout
 
 # Ensure we can import from the parent directory
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -10,6 +12,7 @@ from algorithms.greedy import build_base_timelines, Event, greedy
 from algorithms.backtrack_naive import case_fits, case_insert_cost, travel, calculate_initial_cost, branch_and_bound_naive, define_inputs as define_inputs_naive
 from algorithms.backtrack_optimized import branch_and_bound_optimized, define_inputs as define_inputs_opt
 from algorithms.local_search import local_search
+from tests.generate_test_cases import generate_test_case
 
 class TestCostCalculations(unittest.TestCase):
     def setUp(self):
@@ -313,6 +316,25 @@ class TestLocalSearchRegressions(unittest.TestCase):
         self.assertEqual(new_assignments["C1"], "B1")
         self.assertEqual(new_assignments["C2"], "B2")
         self.assertEqual(new_score, 400)
+
+
+class TestGeneratedCases(unittest.TestCase):
+    def test_generate_test_case_is_deterministic_for_seed(self):
+        args = {
+            "num_barristers": 4,
+            "num_locations": 4,
+            "constrainedness": 0.6,
+            "target_load": 0.7,
+            "phase": "phase_transition",
+        }
+
+        with redirect_stdout(io.StringIO()):
+            case_a = generate_test_case(seed=123, **args)
+            case_b = generate_test_case(seed=123, **args)
+            case_c = generate_test_case(seed=124, **args)
+
+        self.assertEqual(case_a, case_b)
+        self.assertNotEqual(case_a, case_c)
 
 if __name__ == '__main__':
     unittest.main()

@@ -13,19 +13,19 @@ def main():
 
     parser.add_argument(
         "--barristers",
-        default=[15],
+        default=[5],
         help="Number of barristers",
     )
 
     parser.add_argument(
         "--load",
-        default=[0.3],
+        default=[0.4],
         help="The desired ratio of total case minutes / available barrister minutes, e.g. 0.4 = easy, 0.7 = moderate, 0.9 = hard, 1.1 = very hard",
     )
 
     parser.add_argument(
         "--locations",
-        default=[10],
+        default=[3],
         help="Number of locations",
     )
 
@@ -58,6 +58,7 @@ def main():
     #solvers = ["ortools", "backtrack_optimized", "backtrack_naive", "greedy"]
     #solvers = ["ortools", "local_search", "greedy"]
     solvers = ["ortools", "local_search", "greedy", "backtrack_optimized", "backtrack_naive"]
+    solvers = ["greedy", "local_search"]
 
     experiments = []
 

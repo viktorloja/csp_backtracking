@@ -112,47 +112,59 @@ def greedy(
         for i in range(len(b_base)-1):
             total_score += travel(b_base[i].location, b_base[i+1].location)
 
-    
-    for case in cases:
-        cname = case["name"]
+    assigned = True
+    while assigned:
+        print(assignment)
+
+        assigned = False
         best = unassigned_penalty
         chosen_barrister = UNASSIGNED
         curr_idx = None
-        if cname not in assignment_fixed:
-            for barrister in barristers:
 
-                bname = barrister["name"]
-                if barrister["seniority"] < case["seniority"]: # seniority check
-                    continue # if fail, next barrister
 
+        for case in cases:
+            cname = case["name"]
+            if cname in assignment:
+                continue
+            
+            if cname not in assignment_fixed:
+                for barrister in barristers:
+
+                    bname = barrister["name"]
+                    if barrister["seniority"] < case["seniority"]: # seniority check
+                        continue # if fail, next barrister
+
+                    delta, idx = feasible(case, base[bname], base_starts[bname])
+
+                    if delta is not None:
+
+                        if (case_costs[(cname, bname)] + delta) < best:
+                            best = case_costs[(cname, bname)] + delta
+                            chosen_case = case
+                            chosen_barrister = bname
+                            curr_idx = idx
+
+            else:
+
+                bname = assignment_fixed[cname]
                 delta, idx = feasible(case, base[bname], base_starts[bname])
+                case_cost = case_costs[(cname, bname)]
 
-                if delta is not None:
-
-                    if (case_costs[(cname, bname)] + delta) < best:
-                        best = case_costs[(cname, bname)] + delta
-                        chosen_barrister = bname
-                        curr_idx = idx
-
-            if curr_idx is not None:
                 event = Event(case["time"], case["time"] + case["duration"], case["location"], cname)
-                base[chosen_barrister].insert(curr_idx, event)
-                base_starts[chosen_barrister].insert(curr_idx, case["time"])
+                base[bname].insert(idx, event)
+                base_starts[bname].insert(idx, case["time"])
+                total_score += (delta + case_cost)
+                assignment[cname] = bname
+
+        if curr_idx is not None:
+            event = Event(case["time"], case["time"] + case["duration"], case["location"], cname)
+            base[chosen_barrister].insert(curr_idx, event)
+            base_starts[chosen_barrister].insert(curr_idx, case["time"])
 
             total_score += best
             assignment[cname] = chosen_barrister
 
-        else:
-
-            bname = assignment_fixed[cname]
-            delta, idx = feasible(case, base[bname], base_starts[bname])
-            case_cost = case_costs[(cname, bname)]
-
-            event = Event(case["time"], case["time"] + case["duration"], case["location"], cname)
-            base[bname].insert(idx, event)
-            base_starts[bname].insert(idx, case["time"])
-            total_score += (delta + case_cost)
-            assignment[cname] = bname
+            assigned = True
 
 
     return assignment, base, base_starts, total_score

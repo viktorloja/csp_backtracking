@@ -119,14 +119,17 @@ def local_search(barristers, cases, assignments, timelines, timelines_starts, ca
             if timed_out():
                 break
 
-            if bname == UNASSIGNED:
-                continue
-            #cost change for removing
             case = case_by_name[cname]
-
             time = case["time"]
-            old_index = find_case(bname, time)
-            cost_back = remove_case(bname, cname, old_index)
+
+            if bname == UNASSIGNED:
+                cost_back = -10000
+                old_index = None
+            else:
+                #cost change for removing
+                old_index = find_case(bname, time)
+                cost_back = remove_case(bname, cname, old_index)
+            
 
             for new_barrister in barristers:
                 if timed_out():
@@ -151,10 +154,11 @@ def local_search(barristers, cases, assignments, timelines, timelines_starts, ca
         
         if best_cost < 0:
             # pop case from timeline of old barrister
-            # insert case into timeline of new barrister
-            timelines[prev_barrister].pop(prev_index)
-            timelines_starts[prev_barrister].pop(prev_index)
+            if prev_barrister != UNASSIGNED:
+                timelines[prev_barrister].pop(prev_index)
+                timelines_starts[prev_barrister].pop(prev_index)
 
+            # insert case into timeline of new barrister
             ev = Event(best_case["time"], best_case["time"] + best_case["duration"], best_case["location"], best_case["name"])
             timelines[best_barrister].insert(best_index, ev)
             timelines_starts[best_barrister].insert(best_index, best_case["time"])
@@ -165,6 +169,7 @@ def local_search(barristers, cases, assignments, timelines, timelines_starts, ca
         
     def swap():
         best_cost = 0
+        unassigned_flag = False
         # get the unique, non-duplicate combinations
         for (cname1, bname1), (cname2, bname2) in combinations(assignments.items(), 2):
             if timed_out():
@@ -221,39 +226,113 @@ def local_search(barristers, cases, assignments, timelines, timelines_starts, ca
                 timeline2.insert(old_index2, ev)
                 timeline_start2.insert(old_index2, case2["time"])
 
+            elif bname1 != bname2:
+                # one of the barristers is unassigned
+
+                # set assigned barrister to bname1 for one simple code case
+                if bname1 == UNASSIGNED:
+                    bname1 = bname2
+                    bname2 = UNASSIGNED
+                    temp = cname1
+                    cname1 = cname2
+                    cname2 = temp
+
+                case1 = case_by_name[cname1]
+                case2 = case_by_name[cname2]
+
+                if barrister_info[bname1]["seniority"] < case2["seniority"]:
+                    continue
+
+                timeline1 = timelines[bname1]
+                timeline_start1 = timelines_starts[bname1]
+
+                old_index1 = find_case(bname1, case1["time"])
+        
+                new_cost = remove_case(bname1, cname1, old_index1) - 10000
+
+                # pop old case from each of timelines
+                timeline1.pop(old_index1)
+                timeline_start1.pop(old_index1)
+
+                # test to see if new cases fit
+                new_index1 = case_fits(case2, timeline1, timeline_start1)
+
+                if new_index1 != None:
+                    # swap is viable
+                    new_cost += (add_case(bname1, case2, new_index1) + 10000)
+                    # calculate how good the swap is
+                    if new_cost < best_cost:
+
+                        best_cost = new_cost
+                        best_b1 = bname1
+                        best_b2 = bname2
+                        best_c1 = case1
+                        best_c2 = case2
+                    
+                ev = Event(case1["time"], case1["time"] + case1["duration"], case1["location"], case1["name"])
+                timeline1.insert(old_index1, ev)
+                timeline_start1.insert(old_index1, case1["time"])
+
+
         if best_cost < 0:
+            
+            if best_b2 != UNASSIGNED:
 
-            bname1 = best_b1
-            bname2 = best_b2
-            case1 = best_c1
-            case2 = best_c2
+                bname1 = best_b1
+                bname2 = best_b2
+                case1 = best_c1
+                case2 = best_c2
 
-            timeline1 = timelines[bname1]
-            timeline2 = timelines[bname2]
-            timeline_start1 = timelines_starts[bname1]
-            timeline_start2 = timelines_starts[bname2]
+                timeline1 = timelines[bname1]
+                timeline2 = timelines[bname2]
+                timeline_start1 = timelines_starts[bname1]
+                timeline_start2 = timelines_starts[bname2]
 
-            old_index1 = find_case(bname1, case1["time"])
-            old_index2 = find_case(bname2, case2["time"])
+                old_index1 = find_case(bname1, case1["time"])
+                old_index2 = find_case(bname2, case2["time"])
 
-            timeline1.pop(old_index1)
-            timeline_start1.pop(old_index1)
-            timeline2.pop(old_index2)
-            timeline_start2.pop(old_index2)
+                timeline1.pop(old_index1)
+                timeline_start1.pop(old_index1)
+                timeline2.pop(old_index2)
+                timeline_start2.pop(old_index2)
 
-            new_index1 = case_fits(case2, timeline1, timeline_start1)
-            new_index2 = case_fits(case1, timeline2, timeline_start2)
+                new_index1 = case_fits(case2, timeline1, timeline_start1)
+                new_index2 = case_fits(case1, timeline2, timeline_start2)
 
-            ev = Event(case2["time"], case2["time"] + case2["duration"], case2["location"], case2["name"])
-            timeline1.insert(new_index1, ev)
-            timeline_start1.insert(new_index1, case2["time"])
+                ev = Event(case2["time"], case2["time"] + case2["duration"], case2["location"], case2["name"])
+                timeline1.insert(new_index1, ev)
+                timeline_start1.insert(new_index1, case2["time"])
 
-            ev = Event(case1["time"], case1["time"] + case1["duration"], case1["location"], case1["name"])
-            timeline2.insert(new_index2, ev)
-            timeline_start2.insert(new_index2, case1["time"])
+                ev = Event(case1["time"], case1["time"] + case1["duration"], case1["location"], case1["name"])
+                timeline2.insert(new_index2, ev)
+                timeline_start2.insert(new_index2, case1["time"])
 
-            assignments[case1["name"]] = bname2
-            assignments[case2["name"]] = bname1
+                assignments[case1["name"]] = bname2
+                assignments[case2["name"]] = bname1
+
+            else:
+
+                bname1 = best_b1
+                bname2 = best_b2
+                case1 = best_c1
+                case2 = best_c2
+
+                timeline1 = timelines[bname1]
+                timeline_start1 = timelines_starts[bname1]
+
+                old_index1 = find_case(bname1, case1["time"])
+
+                timeline1.pop(old_index1)
+                timeline_start1.pop(old_index1)
+
+                new_index1 = case_fits(case2, timeline1, timeline_start1)
+
+                ev = Event(case2["time"], case2["time"] + case2["duration"], case2["location"], case2["name"])
+                timeline1.insert(new_index1, ev)
+                timeline_start1.insert(new_index1, case2["time"])
+
+                assignments[case1["name"]] = bname2
+                assignments[case2["name"]] = bname1
 
         return best_cost
 

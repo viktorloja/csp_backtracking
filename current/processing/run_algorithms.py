@@ -1,6 +1,6 @@
 from algorithms.ortoolssolver3 import *
 from algorithms.backtrack_optimized import *
-from algorithms.greedy import greedy
+from algorithms.greedy_most_constrained import greedy
 from algorithms.backtrack_naive import *
 from algorithms.local_search import local_search
 import tracemalloc

@@ -207,12 +207,16 @@ def generate_schedule(cases, barristers, travel_times,
         tracemalloc.start()
         start_time = time.time()
 
-        solution, schedules, starts, cost = exhaustive_greedy(
+        domains, constraints, timelines, timelines_starts = define_inputs(cases_sorted, barristers, travel_times)
+
+        solution, cost, schedules, starts = greedy(
             cases,
-            barristers,
+            timelines,
+            timelines_starts,
             travel_times,
             case_costs,
-            assignment_fixed = assignment_fixed
+            domains,
+            constraints,
         )
 
         solution, schedules, cost = local_search(
@@ -289,7 +293,7 @@ def generate_schedule(cases, barristers, travel_times,
         tracemalloc.start()
         start_time = time.time()
 
-        solution, cost, schedules = greedy(
+        solution, cost, schedules, starts = greedy(
             cases,
             timelines,
             timelines_starts,

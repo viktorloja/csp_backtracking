@@ -52,18 +52,21 @@ def case_insert_cost(
     travel_times
 ):
     """
-    Find index where case would be inserted into barrister timeline
-    Calculate the delta (change in total travel time)
+    Find whether the case can still be inserted into the current timeline.
+    Returns the added travel cost and insertion index for feasible insertions.
     """
 
     c_start = case["time"]
-    #c_end = c_start + c["duration"]
+    c_end = c_start + case["duration"]
     c_loc = case["location"]
 
     # find insertion point by start time
     idx = bisect_right(timeline_starts, c_start)
 
-    prev_ev = timeline[idx - 1] 
+    if idx == 0 or idx == len(timeline):
+        return None, None
+
+    prev_ev = timeline[idx - 1]
     next_ev = timeline[idx]
 
     prev_end, prev_loc = prev_ev.end, prev_ev.location
@@ -73,6 +76,14 @@ def case_insert_cost(
     t_prev = travel(travel_times, prev_loc, c_loc)
     t_next = travel(travel_times, c_loc, next_loc)
     t_prev_next = travel(travel_times, prev_loc, next_loc)
+
+    if t_prev is None or t_next is None or t_prev_next is None:
+        return None, None
+
+    if prev_end + t_prev > c_start:
+        return None, None
+    if c_end + t_next > next_start:
+        return None, None
 
     delta = t_prev + t_next - t_prev_next
     return delta, idx
@@ -109,10 +120,14 @@ def greedy(
         for (x, y) in constraints:
             neighbours[x].add(y)
             neighbours[y].add(x)
-
+    
     def choose_next_case(rem):
-        # MRV + degree tie-break
-        return min(rem, key=lambda c: (len(domains[c]), -len(neighbours.get(c, ()))))
+        def score(case):
+            domain_size = len(domains[case])
+            degree = sum(1 for neighbour in neighbours[case] if neighbour in rem)
+            return (domain_size, -degree)
+        return min(rem, key=score)
+
     
     def order_values(cname, case):
         # LCV-ish: sort by incremental (case_cost + lambda*delta_travel)
@@ -122,6 +137,8 @@ def greedy(
                 vals.append((case_costs[(cname, UNASSIGNED)], UNASSIGNED, None))
                 continue
             delta, idx = case_insert_cost(case, timelines[b], timelines_starts[b], travel_times)
+            if delta is None:
+                continue
             inc = case_costs[(cname, b)] + lambda_travel * delta
             vals.append((inc, b, idx))
         vals.sort(key=lambda x: x[0])
@@ -136,6 +153,8 @@ def greedy(
         case = cases_by_name[cname]
 
         candidates = order_values(cname, case)
+        if not candidates:
+            candidates = [(case_costs[(cname, UNASSIGNED)], UNASSIGNED, None)]
         inc, bname, idx = candidates[0]
         assignment[cname] = bname
         total_score += inc
@@ -153,7 +172,7 @@ def greedy(
             timelines[bname].insert(idx, event)
             timelines_starts[bname].insert(idx, case["time"])
 
-    return assignment, total_score, timelines
+    return assignment, total_score, timelines, timelines_starts
 
 
 def case_fits(

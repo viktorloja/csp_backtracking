@@ -150,8 +150,11 @@ def branch_and_bound_optimized(
 
     # heuristic: degree for tie-break
     def choose_next_case(rem):
-        # MRV + degree tie-break
-        return min(rem, key=lambda c: (len(domains[c]), -len(neighbours.get(c, ()))))
+        def score(case):
+            domain_size = len(domains[case])
+            degree = sum(1 for neighbour in neighbours[case] if neighbour in rem)
+            return (domain_size, -degree)
+        return min(rem, key=score)
 
     def order_values(cname, case):
         # LCV-ish: sort by incremental (case_cost + lambda*delta_travel)

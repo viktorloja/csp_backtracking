@@ -169,7 +169,6 @@ def branch_and_bound_optimized(
     def dfs(rem_cases, current_cost, timelines, timelines_starts):
         nonlocal best_solution, best_cost, best_timelines
 
-
         if not rem_cases:
             if current_cost < best_cost:
                 best_cost = current_cost

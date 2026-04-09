@@ -1,6 +1,8 @@
 from algorithms.ortoolssolver3 import *
 from algorithms.backtrack_optimized import *
-from algorithms.greedy_most_constrained import greedy
+from algorithms.greedy import greedy
+from algorithms.old_greedy import greedy as old_greedy
+from algorithms.greedy_exhaustive import greedy as exhaustive_greedy
 from algorithms.backtrack_naive import *
 from algorithms.local_search import local_search
 import tracemalloc
@@ -161,7 +163,6 @@ def generate_schedule(cases, barristers, travel_times,
             constraints,
         )
 
-
         end_time = time.time()
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
@@ -206,7 +207,7 @@ def generate_schedule(cases, barristers, travel_times,
         tracemalloc.start()
         start_time = time.time()
 
-        solution, schedules, starts, cost = greedy(
+        solution, schedules, starts, cost = exhaustive_greedy(
             cases,
             barristers,
             travel_times,
@@ -235,12 +236,12 @@ def generate_schedule(cases, barristers, travel_times,
         output["runtime"] = end_time - start_time
         output["memory"] = peak / 10**6
 
-    elif method == "greedy":
+    elif method == "exhaustive_greedy":
 
         tracemalloc.start()
         start_time = time.time()
 
-        solution, schedules, starts, cost = greedy(
+        solution, schedules, starts, cost = exhaustive_greedy(
             cases,
             barristers,
             travel_times,
@@ -258,7 +259,56 @@ def generate_schedule(cases, barristers, travel_times,
         output["runtime"] = end_time - start_time
         output["memory"] = peak / 10**6
 
+    elif method == "old_greedy":
 
+        tracemalloc.start()
+        start_time = time.time()
+
+        solution, schedules, starts, cost = old_greedy(
+            cases,
+            barristers,
+            travel_times,
+            case_costs,
+            assignment_fixed = assignment_fixed
+        )
+
+        end_time = time.time()
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+
+        output["result"] = solution
+        output["schedule"] = schedules
+        output["score"] = cost
+        output["runtime"] = end_time - start_time
+        output["memory"] = peak / 10**6
+
+    elif method == "greedy":
+
+        domains, constraints, timelines, timelines_starts = define_inputs(cases_sorted, barristers, travel_times)
+
+        tracemalloc.start()
+        start_time = time.time()
+
+        solution, cost, schedules = greedy(
+            cases,
+            timelines,
+            timelines_starts,
+            travel_times,
+            case_costs,
+            domains,
+            constraints,
+        )
+
+        end_time = time.time()
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+
+        output["result"] = solution
+        output["schedule"] = schedules
+        output["score"] = cost
+        output["runtime"] = end_time - start_time
+        output["memory"] = peak / 10**6
+    
     else:
         raise ValueError(f"Unknown method: {method}")
 

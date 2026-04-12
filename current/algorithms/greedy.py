@@ -138,6 +138,7 @@ def greedy(
                 continue
             delta, idx = case_insert_cost(case, timelines[b], timelines_starts[b], travel_times)
             if delta is None:
+                print("invalid!!")
                 continue
             inc = case_costs[(cname, b)] + lambda_travel * delta
             vals.append((inc, b, idx))

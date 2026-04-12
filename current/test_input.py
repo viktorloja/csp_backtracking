@@ -19,19 +19,19 @@ def main():
 
     parser.add_argument(
         "--load",
-        default=[0.4],
+        default=[0.6],
         help="The desired ratio of total case minutes / available barrister minutes, e.g. 0.4 = easy, 0.7 = moderate, 0.9 = hard, 1.1 = very hard",
     )
 
     parser.add_argument(
         "--locations",
-        default=[7],
+        default=[10],
         help="Number of locations",
     )
 
     parser.add_argument(
         "--constraint",
-        default=[0.2],
+        default=[0.5],
         help="Level of constrainedness, 0.0 is least, 1.0 is most",
     )
 

@@ -57,33 +57,21 @@ def case_insert_cost(
     """
 
     c_start = case["time"]
-    c_end = c_start + case["duration"]
     c_loc = case["location"]
 
     # find insertion point by start time
     idx = bisect_right(timeline_starts, c_start)
 
-    if idx == 0 or idx == len(timeline):
-        return None, None
-
     prev_ev = timeline[idx - 1]
     next_ev = timeline[idx]
 
-    prev_end, prev_loc = prev_ev.end, prev_ev.location
-    next_start, next_loc = next_ev.start, next_ev.location
+    prev_loc = prev_ev.location
+    next_loc = next_ev.location
 
     # delta travel
     t_prev = travel(travel_times, prev_loc, c_loc)
     t_next = travel(travel_times, c_loc, next_loc)
     t_prev_next = travel(travel_times, prev_loc, next_loc)
-
-    if t_prev is None or t_next is None or t_prev_next is None:
-        return None, None
-
-    if prev_end + t_prev > c_start:
-        return None, None
-    if c_end + t_next > next_start:
-        return None, None
 
     delta = t_prev + t_next - t_prev_next
     return delta, idx
@@ -122,24 +110,23 @@ def greedy(
             neighbours[y].add(x)
     
     def choose_next_case(rem):
-        def score(case):
-            domain_size = len(domains[case])
-            degree = sum(1 for neighbour in neighbours[case] if neighbour in rem)
-            return (domain_size, -degree)
+        def score(cname):
+            case = cases_by_name[cname]
+            domain_size = len(domains[cname])
+            degree = sum(1 for neighbour in neighbours[cname] if neighbour in rem)
+            return (domain_size, -degree, case["time"], cname)
+        
         return min(rem, key=score)
 
     
     def order_values(cname, case):
         # LCV-ish: sort by incremental (case_cost + lambda*delta_travel)
         vals = []
-        for b in domains[cname]:
+        for b in sorted(domains[cname]):
             if b == UNASSIGNED:
                 vals.append((case_costs[(cname, UNASSIGNED)], UNASSIGNED, None))
                 continue
             delta, idx = case_insert_cost(case, timelines[b], timelines_starts[b], travel_times)
-            if delta is None:
-                print("invalid!!")
-                continue
             inc = case_costs[(cname, b)] + lambda_travel * delta
             vals.append((inc, b, idx))
         vals.sort(key=lambda x: x[0])

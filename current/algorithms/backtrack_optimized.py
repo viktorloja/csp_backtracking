@@ -82,8 +82,8 @@ def case_insert_cost(
     prev_ev = timeline[idx - 1] 
     next_ev = timeline[idx]
 
-    prev_end, prev_loc = prev_ev.end, prev_ev.location
-    next_start, next_loc = next_ev.start, next_ev.location
+    prev_loc = prev_ev.location
+    next_loc = next_ev.location
 
     # delta travel
     t_prev = travel(travel_times, prev_loc, c_loc)

@@ -4,6 +4,8 @@ from tests.generate_test_cases import generate_test_case
 from processing.run_algorithms import generate_schedule
 from output.html_output import render_schedule_html_from_barrister_events
 from output.metrics_graph import plot_graphs
+from output.line_graph import plot_runtime_medians
+
 
 
 def main():
@@ -19,7 +21,7 @@ def main():
 
     parser.add_argument(
         "--load",
-        default=[0.6],
+        default=[0.5],
         help="The desired ratio of total case minutes / available barrister minutes, e.g. 0.4 = easy, 0.7 = moderate, 0.9 = hard, 1.1 = very hard",
     )
 
@@ -109,7 +111,14 @@ def main():
         file_name = "plot-"+str(i)+".png"
         file_path = plots_dir / file_name
         plot_graphs(results, file_path)
-            
+        plot_runtime_medians(
+            input_sizes,
+            runtime_samples,
+            x_label="Number of cases",
+            y_label="Runtime (seconds)",
+            title="Median Solver Runtime vs Number of Cases",
+            output_file="median_runtime_plot.png",
+        )
 
     for experiment in experiments:
         for key in experiment.keys():

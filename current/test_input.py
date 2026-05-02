@@ -4,7 +4,7 @@ from tests.generate_test_cases import generate_test_case
 from processing.run_algorithms import generate_schedule
 from output.html_output import render_schedule_html_from_barrister_events
 from output.metrics_graph import plot_graphs
-from output.line_graph import plot_runtime_medians
+from output.line_graph import plot_multiple_runtime_medians
 
 
 
@@ -15,31 +15,37 @@ def main():
 
     parser.add_argument(
         "--barristers",
-        default=[50],
+        default=[15],
         help="Number of barristers",
     )
 
     parser.add_argument(
         "--load",
-        default=[0.5],
+        default=[0.4],
         help="The desired ratio of total case minutes / available barrister minutes, e.g. 0.4 = easy, 0.7 = moderate, 0.9 = hard, 1.1 = very hard",
     )
 
     parser.add_argument(
         "--locations",
-        default=[10],
+        default=[5,5,5,5,5],
         help="Number of locations",
     )
 
     parser.add_argument(
         "--constraint",
-        default=[0.5],
+        default=[0.7],
         help="Level of constrainedness, 0.0 is least, 1.0 is most",
     )
 
     parser.add_argument(
+        "--iterations",
+        default=3,
+        help="Number of iterations to run each test case on each algorithm",
+    )
+
+    parser.add_argument(
         "--phase",
-        default=["phase_transition"],
+        default=["phase_transition", "phase_transition", "phase_transition"],
         help="Phase of difficulty, e.g. easy, phase_transition, hard",
     )
 
@@ -51,18 +57,24 @@ def main():
 
     parser.add_argument(
         "--training",
-        default=[False],
+        default=[False,False,False,False,False],
         help="Enable training mode to prioritize lower experience barristers",
     )
 
     args = parser.parse_args()
+    num_iterations = args.iterations
     length = len(args.barristers)
+
     #solvers = ["ortools", "backtrack_optimized", "backtrack_naive", "greedy"]
     #solvers = ["ortools", "local_search", "greedy"]
     solvers = ["ortools", "local_search", "greedy", "backtrack_optimized", "backtrack_naive"]
-    solvers = ["greedy", "exhaustive_greedy", "old_greedy", "local_search"]
+    #solvers = ["greedy", "exhaustive_greedy", "old_greedy", "local_search"]
 
-    experiments = []
+    results = {}
+    costs = {}
+    for solver in solvers:
+        results[solver] = []
+        costs[solver] = []
 
     plots_dir = Path(args.output + "/plots")
     plots_dir.mkdir(parents=True, exist_ok=True)
@@ -72,54 +84,52 @@ def main():
 
     for i in range(length):
 
-        results = {}
         barristers, cases, travel_times = generate_test_case(args.barristers[i], args.locations[i], args.constraint[i], args.load[i], args.phase[i])
 
         for solver in solvers:
             print("Running solver: "+solver)
+            runtimes = []
+            scores = []
 
-            result = generate_schedule(
-                method=solver,
-                barristers=barristers,
-                cases=cases,
-                travel_times=travel_times,
-                training=args.training[i],
-            )
-            #print(result)
+            for j in range(num_iterations):
+                result = generate_schedule(
+                    method=solver,
+                    barristers=barristers,
+                    cases=cases,
+                    travel_times=travel_times,
+                    training=args.training[i],
+                )
+                print(result["result"])
 
-            schedule = result["schedule"]
+                schedule = result["schedule"]
 
-            if not schedule:
-                raise RuntimeError(solver+" solver returned no schedule.")
+                if not schedule:
+                    raise RuntimeError(solver+" solver returned no schedule.")
 
-            # Render HTML
-            
-            file_name = "schedule-"+str(i)+"-"+solver+".html"
-            file_path = schedules_dir / file_name
+                # Render HTML
+                
+                file_name = "schedule-"+str(i)+"-"+solver+"-iter_"+str(j)+".html"
+                file_path = schedules_dir / file_name
 
-            html_path = render_schedule_html_from_barrister_events(
-                schedule,
-                title="Barrister Schedule",
-                out_path=file_path,
-            )
+                html_path = render_schedule_html_from_barrister_events(
+                    schedule,
+                    title="Barrister Schedule",
+                    out_path=file_path,
+                )
 
-            #print("HTML "+solver+"-schedule written to: "+html_path)
-            
-            results[solver] = result
+                #print("HTML "+solver+"-schedule written to: "+html_path)
+                
+                runtimes.append(result["runtime"])
+                scores.append(result["score"])
 
-        experiments.append(results)
-        file_name = "plot-"+str(i)+".png"
-        file_path = plots_dir / file_name
-        plot_graphs(results, file_path)
-        plot_runtime_medians(
-            input_sizes,
-            runtime_samples,
-            x_label="Number of cases",
-            y_label="Runtime (seconds)",
-            title="Median Solver Runtime vs Number of Cases",
-            output_file="median_runtime_plot.png",
-        )
+            results[solver].append(runtimes)
+            costs[solver].append(scores)
 
+        #file_name = "plot-"+str(i)+".png"
+        #file_path = plots_dir / file_name
+        #plot_graphs(results, file_path)
+
+    """
     for experiment in experiments:
         for key in experiment.keys():
             print(key)
@@ -130,10 +140,14 @@ def main():
 
             #cases.sort()
             #print(cases)
+    """
+    print(results)
+    print(costs)
+    plot_multiple_runtime_medians(
+        args.barristers,
+        results,
+    )
 
-
-
-    #plot_graph(experiments, args.output)
 
 if __name__ == "__main__":
     main()

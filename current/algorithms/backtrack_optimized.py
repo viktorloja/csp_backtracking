@@ -111,7 +111,7 @@ def branch_and_bound_optimized(
     case_costs,                # dict {(case_name, barrister_name): cost}
     domains,                   # dict {case_name: [barrister_names...]}            
     constraints,
-    time_limit_s = 30,        
+    time_limit_s = 300,        
     *,
     lambda_travel=1.0,
     unassigned_penalty=10000,
@@ -195,42 +195,42 @@ def branch_and_bound_optimized(
         if current_cost + candidates[0][0] >= best_cost:
             return
 
-        for inc, b, idx in candidates:
+        for inc, bname, idx in candidates:
+
+            if timed_out():
+                return
+            
             new_cost = current_cost + inc
             if new_cost >= best_cost:
                 break  # candidates sorted by inc
 
-            assignment[cname] = b
+            assignment[cname] = bname
             removed = []
 
             inserted = False
-            if b != UNASSIGNED:
+            if bname != UNASSIGNED:
 
                 # remove b from domains of conflicting case
                 for neighbour in neighbours[cname]:
-                    if b in domains[neighbour]:
-                        domains[neighbour].remove(b)
+                    if bname in domains[neighbour]:
+                        domains[neighbour].remove(bname)
                         removed.append(neighbour)
                         
                 # insert event
-                c = cases_by_name[cname]
-                ev = Event(c["time"], c["time"] + c["duration"], c["location"], cname)
-                timelines[b].insert(idx, ev)
-                timelines_starts[b].insert(idx, c["time"])
+                ev = Event(case["time"], case["time"] + case["duration"], case["location"], cname)
+                timelines[bname].insert(idx, ev)
+                timelines_starts[bname].insert(idx, case["time"])
                 inserted = True
 
             dfs(rem_cases - {cname}, new_cost, timelines, timelines_starts)
 
-            if timed_out():
-                return
-
             # undo
             if inserted:
-                timelines[b].pop(idx)
-                timelines_starts[b].pop(idx)
+                timelines[bname].pop(idx)
+                timelines_starts[bname].pop(idx)
 
             for neighbour in removed:
-                domains[neighbour].add(b)
+                domains[neighbour].add(bname)
 
             del assignment[cname]
 

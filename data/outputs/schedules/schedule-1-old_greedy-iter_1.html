@@ -1,0 +1,1442 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Barrister Schedule</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --card: #121a24;
+    --muted: #92a2b3;
+    --text: #e7eef6;
+    --border: #223041;
+    --ok: #1f7a3a;
+    --warn: #9b6b00;
+    --bad: #a33;
+  }
+  body {
+    margin: 0;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  h1 {
+    margin: 0 0 6px 0;
+    font-size: 22px;
+  }
+  .meta {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .kpi {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 8px 0 18px 0;
+  }
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .pill.ok   { border-color: rgba(31,122,58,0.6); color: #bff3cc; }
+  .pill.warn { border-color: rgba(155,107,0,0.6); color: #ffe2a6; }
+  .pill.bad  { border-color: rgba(163,51,51,0.6); color: #ffb4b4; }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  @media (min-width: 900px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  }
+  .card h2 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 12px;
+  }
+  tr.overlap td {
+    border-bottom-color: rgba(163,51,51,0.6);
+  }
+  .rowbadge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(163,51,51,0.6);
+    color: #ffb4b4;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Barrister Schedule</h1>
+  <div class="meta">Generated 2026-04-27 16:24:26</div>
+
+  <div class="kpi">
+    <span class="pill ok">Barristers: 20</span>
+    <span class="pill ok">Events: 129</span>
+    <span class="pill ok">Total time: 62.18 hrs</span>
+    <span class="pill ok">Overlaps: 0</span>
+  </div>
+<div class="grid">
+  <div class="card">
+    <h2>
+      <span>B0</span>
+      <span class="pill">7 events • 3.30 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L6</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>10:10–11:02</td>
+          <td><strong>L6</strong></td>
+          <td>BLOCKED</td>
+          <td>52 min</td>
+        </tr>
+
+        <tr class="">
+          <td>11:25–11:41</td>
+          <td><strong>L3</strong></td>
+          <td>BLOCKED</td>
+          <td>16 min</td>
+        </tr>
+
+        <tr class="">
+          <td>12:30–13:05</td>
+          <td><strong>L0</strong></td>
+          <td>C18</td>
+          <td>35 min</td>
+        </tr>
+
+        <tr class="">
+          <td>13:20–14:20</td>
+          <td><strong>L0</strong></td>
+          <td>BLOCKED</td>
+          <td>60 min</td>
+        </tr>
+
+        <tr class="">
+          <td>15:10–15:45</td>
+          <td><strong>L0</strong></td>
+          <td>C7</td>
+          <td>35 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L6</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B1</span>
+      <span class="pill">6 events • 2.83 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L3</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>09:50–10:30</td>
+          <td><strong>L3</strong></td>
+          <td>C45</td>
+          <td>40 min</td>
+        </tr>
+
+        <tr class="">
+          <td>11:30–12:30</td>
+          <td><strong>L0</strong></td>
+          <td>C90</td>
+          <td>60 min</td>
+        </tr>
+
+        <tr class="">
+          <td>13:50–14:30</td>
+          <td><strong>L6</strong></td>
+          <td>C74</td>
+          <td>40 min</td>
+        </tr>
+
+        <tr class="">
+          <td>14:55–15:25</td>
+          <td><strong>L3</strong></td>
+          <td>C51</td>
+          <td>30 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L3</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B10</span>
+      <span class="pill">5 events • 2.38 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L5</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>11:05–11:40</td>
+          <td><strong>L6</strong></td>
+          <td>C60</td>
+          <td>35 min</td>
+        </tr>
+
+        <tr class="">
+          <td>12:05–12:53</td>
+          <td><strong>L6</strong></td>
+          <td>BLOCKED</td>
+          <td>48 min</td>
+        </tr>
+
+        <tr class="">
+          <td>14:55–15:55</td>
+          <td><strong>L5</strong></td>
+          <td>C28</td>
+          <td>60 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L5</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B11</span>
+      <span class="pill">6 events • 2.75 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L6</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>10:55–11:40</td>
+          <td><strong>L6</strong></td>
+          <td>C34</td>
+          <td>45 min</td>
+        </tr>
+
+        <tr class="">
+          <td>12:25–13:00</td>
+          <td><strong>L6</strong></td>
+          <td>C91</td>
+          <td>35 min</td>
+        </tr>
+
+        <tr class="">
+          <td>13:35–14:15</td>
+          <td><strong>L6</strong></td>
+          <td>C80</td>
+          <td>40 min</td>
+        </tr>
+
+        <tr class="">
+          <td>15:10–15:55</td>
+          <td><strong>L6</strong></td>
+          <td>C9</td>
+          <td>45 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L6</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B12</span>
+      <span class="pill">6 events • 2.33 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L3</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>10:35–11:00</td>
+          <td><strong>L3</strong></td>
+          <td>C0</td>
+          <td>25 min</td>
+        </tr>
+
+        <tr class="">
+          <td>12:00–12:35</td>
+          <td><strong>L6</strong></td>
+          <td>C92</td>
+          <td>35 min</td>
+        </tr>
+
+        <tr class="">
+          <td>13:35–14:10</td>
+          <td><strong>L0</strong></td>
+          <td>C46</td>
+          <td>35 min</td>
+        </tr>
+
+        <tr class="">
+          <td>15:15–16:00</td>
+          <td><strong>L0</strong></td>
+          <td>C62</td>
+          <td>45 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L3</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B13</span>
+      <span class="pill">6 events • 3.20 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L3</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>10:55–11:30</td>
+          <td><strong>L0</strong></td>
+          <td>C96</td>
+          <td>35 min</td>
+        </tr>
+
+        <tr class="">
+          <td>11:50–12:16</td>
+          <td><strong>L0</strong></td>
+          <td>BLOCKED</td>
+          <td>26 min</td>
+        </tr>
+
+        <tr class="">
+          <td>13:35–14:05</td>
+          <td><strong>L3</strong></td>
+          <td>C93</td>
+          <td>30 min</td>
+        </tr>
+
+        <tr class="">
+          <td>14:55–16:36</td>
+          <td><strong>L6</strong></td>
+          <td>BLOCKED</td>
+          <td>101 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L3</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B14</span>
+      <span class="pill">7 events • 3.17 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L1</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>09:45–10:15</td>
+          <td><strong>L1</strong></td>
+          <td>C37</td>
+          <td>30 min</td>
+        </tr>
+
+        <tr class="">
+          <td>10:30–11:00</td>
+          <td><strong>L1</strong></td>
+          <td>C56</td>
+          <td>30 min</td>
+        </tr>
+
+        <tr class="">
+          <td>11:20–12:20</td>
+          <td><strong>L1</strong></td>
+          <td>C67</td>
+          <td>60 min</td>
+        </tr>
+
+        <tr class="">
+          <td>13:35–14:20</td>
+          <td><strong>L1</strong></td>
+          <td>C5</td>
+          <td>45 min</td>
+        </tr>
+
+        <tr class="">
+          <td>15:20–15:45</td>
+          <td><strong>L1</strong></td>
+          <td>C25</td>
+          <td>25 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L1</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B15</span>
+      <span class="pill">5 events • 2.67 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L0</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>09:45–10:25</td>
+          <td><strong>L0</strong></td>
+          <td>C43</td>
+          <td>40 min</td>
+        </tr>
+
+        <tr class="">
+          <td>10:35–11:35</td>
+          <td><strong>L0</strong></td>
+          <td>C73</td>
+          <td>60 min</td>
+        </tr>
+
+        <tr class="">
+          <td>13:40–14:40</td>
+          <td><strong>L1</strong></td>
+          <td>C8</td>
+          <td>60 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L0</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B16</span>
+      <span class="pill">9 events • 4.33 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L6</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>09:15–09:50</td>
+          <td><strong>L6</strong></td>
+          <td>C58</td>
+          <td>35 min</td>
+        </tr>
+
+        <tr class="">
+          <td>09:55–10:40</td>
+          <td><strong>L6</strong></td>
+          <td>C55</td>
+          <td>45 min</td>
+        </tr>
+
+        <tr class="">
+          <td>11:10–11:55</td>
+          <td><strong>L3</strong></td>
+          <td>C88</td>
+          <td>45 min</td>
+        </tr>
+
+        <tr class="">
+          <td>12:05–12:40</td>
+          <td><strong>L3</strong></td>
+          <td>C35</td>
+          <td>35 min</td>
+        </tr>
+
+        <tr class="">
+          <td>13:40–14:05</td>
+          <td><strong>L6</strong></td>
+          <td>C11</td>
+          <td>25 min</td>
+        </tr>
+
+        <tr class="">
+          <td>14:05–14:50</td>
+          <td><strong>L6</strong></td>
+          <td>C38</td>
+          <td>45 min</td>
+        </tr>
+
+        <tr class="">
+          <td>15:20–15:50</td>
+          <td><strong>L3</strong></td>
+          <td>C30</td>
+          <td>30 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L6</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B17</span>
+      <span class="pill">7 events • 2.95 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L6</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>09:20–10:05</td>
+          <td><strong>L6</strong></td>
+          <td>C31</td>
+          <td>45 min</td>
+        </tr>
+
+        <tr class="">
+          <td>10:10–10:45</td>
+          <td><strong>L6</strong></td>
+          <td>C63</td>
+          <td>35 min</td>
+        </tr>
+
+        <tr class="">
+          <td>13:05–13:32</td>
+          <td><strong>L5</strong></td>
+          <td>BLOCKED</td>
+          <td>27 min</td>
+        </tr>
+
+        <tr class="">
+          <td>13:40–14:10</td>
+          <td><strong>L5</strong></td>
+          <td>C19</td>
+          <td>30 min</td>
+        </tr>
+
+        <tr class="">
+          <td>15:00–15:40</td>
+          <td><strong>L4</strong></td>
+          <td>C72</td>
+          <td>40 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L6</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B18</span>
+      <span class="pill">7 events • 3.42 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L6</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>09:10–10:00</td>
+          <td><strong>L6</strong></td>
+          <td>BLOCKED</td>
+          <td>50 min</td>
+        </tr>
+
+        <tr class="">
+          <td>11:00–11:40</td>
+          <td><strong>L0</strong></td>
+          <td>C64</td>
+          <td>40 min</td>
+        </tr>
+
+        <tr class="">
+          <td>12:00–12:25</td>
+          <td><strong>L0</strong></td>
+          <td>C81</td>
+          <td>25 min</td>
+        </tr>
+
+        <tr class="">
+          <td>13:40–14:10</td>
+          <td><strong>L3</strong></td>
+          <td>C86</td>
+          <td>30 min</td>
+        </tr>
+
+        <tr class="">
+          <td>14:35–15:35</td>
+          <td><strong>L3</strong></td>
+          <td>C79</td>
+          <td>60 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L6</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B19</span>
+      <span class="pill">6 events • 3.48 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L2</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>10:00–10:40</td>
+          <td><strong>L4</strong></td>
+          <td>C76</td>
+          <td>40 min</td>
+        </tr>
+
+        <tr class="">
+          <td>12:10–13:46</td>
+          <td><strong>L0</strong></td>
+          <td>BLOCKED</td>
+          <td>96 min</td>
+        </tr>
+
+        <tr class="">
+          <td>14:30–15:15</td>
+          <td><strong>L0</strong></td>
+          <td>C41</td>
+          <td>45 min</td>
+        </tr>
+
+        <tr class="">
+          <td>16:25–16:53</td>
+          <td><strong>L2</strong></td>
+          <td>BLOCKED</td>
+          <td>28 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L2</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B2</span>
+      <span class="pill">8 events • 4.17 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L4</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>09:50–10:15</td>
+          <td><strong>L5</strong></td>
+          <td>C54</td>
+          <td>25 min</td>
+        </tr>
+
+        <tr class="">
+          <td>11:30–12:00</td>
+          <td><strong>L4</strong></td>
+          <td>C77</td>
+          <td>30 min</td>
+        </tr>
+
+        <tr class="">
+          <td>12:10–12:40</td>
+          <td><strong>L4</strong></td>
+          <td>C68</td>
+          <td>30 min</td>
+        </tr>
+
+        <tr class="">
+          <td>12:50–13:50</td>
+          <td><strong>L4</strong></td>
+          <td>C26</td>
+          <td>60 min</td>
+        </tr>
+
+        <tr class="">
+          <td>14:20–15:20</td>
+          <td><strong>L4</strong></td>
+          <td>C27</td>
+          <td>60 min</td>
+        </tr>
+
+        <tr class="">
+          <td>15:50–16:35</td>
+          <td><strong>L2</strong></td>
+          <td>BLOCKED</td>
+          <td>45 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L4</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B3</span>
+      <span class="pill">6 events • 3.62 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L4</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>09:55–10:35</td>
+          <td><strong>L5</strong></td>
+          <td>C95</td>
+          <td>40 min</td>
+        </tr>
+
+        <tr class="">
+          <td>11:35–12:10</td>
+          <td><strong>L4</strong></td>
+          <td>C17</td>
+          <td>35 min</td>
+        </tr>
+
+        <tr class="">
+          <td>12:35–13:00</td>
+          <td><strong>L2</strong></td>
+          <td>C94</td>
+          <td>25 min</td>
+        </tr>
+
+        <tr class="">
+          <td>14:10–16:07</td>
+          <td><strong>L5</strong></td>
+          <td>BLOCKED</td>
+          <td>117 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L4</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B4</span>
+      <span class="pill">7 events • 2.83 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L2</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>11:05–11:40</td>
+          <td><strong>L1</strong></td>
+          <td>C78</td>
+          <td>35 min</td>
+        </tr>
+
+        <tr class="">
+          <td>13:00–13:25</td>
+          <td><strong>L2</strong></td>
+          <td>C12</td>
+          <td>25 min</td>
+        </tr>
+
+        <tr class="">
+          <td>14:25–14:55</td>
+          <td><strong>L2</strong></td>
+          <td>C59</td>
+          <td>30 min</td>
+        </tr>
+
+        <tr class="">
+          <td>15:25–16:00</td>
+          <td><strong>L2</strong></td>
+          <td>C84</td>
+          <td>35 min</td>
+        </tr>
+
+        <tr class="">
+          <td>16:05–16:50</td>
+          <td><strong>L2</strong></td>
+          <td>C57</td>
+          <td>45 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L2</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B5</span>
+      <span class="pill">5 events • 2.63 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L0</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>11:20–13:05</td>
+          <td><strong>L0</strong></td>
+          <td>BLOCKED</td>
+          <td>105 min</td>
+        </tr>
+
+        <tr class="">
+          <td>13:25–13:48</td>
+          <td><strong>L0</strong></td>
+          <td>BLOCKED</td>
+          <td>23 min</td>
+        </tr>
+
+        <tr class="">
+          <td>15:20–15:50</td>
+          <td><strong>L0</strong></td>
+          <td>C44</td>
+          <td>30 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L0</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B6</span>
+      <span class="pill">4 events • 1.45 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L3</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>11:05–11:35</td>
+          <td><strong>L0</strong></td>
+          <td>C53</td>
+          <td>30 min</td>
+        </tr>
+
+        <tr class="">
+          <td>12:40–13:37</td>
+          <td><strong>L3</strong></td>
+          <td>BLOCKED</td>
+          <td>57 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L3</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B7</span>
+      <span class="pill">9 events • 4.08 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L0</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>09:50–10:30</td>
+          <td><strong>L0</strong></td>
+          <td>C1</td>
+          <td>40 min</td>
+        </tr>
+
+        <tr class="">
+          <td>10:35–11:10</td>
+          <td><strong>L0</strong></td>
+          <td>C50</td>
+          <td>35 min</td>
+        </tr>
+
+        <tr class="">
+          <td>11:30–12:05</td>
+          <td><strong>L0</strong></td>
+          <td>C42</td>
+          <td>35 min</td>
+        </tr>
+
+        <tr class="">
+          <td>12:20–12:55</td>
+          <td><strong>L0</strong></td>
+          <td>C24</td>
+          <td>35 min</td>
+        </tr>
+
+        <tr class="">
+          <td>13:40–14:10</td>
+          <td><strong>L3</strong></td>
+          <td>C14</td>
+          <td>30 min</td>
+        </tr>
+
+        <tr class="">
+          <td>14:35–15:00</td>
+          <td><strong>L6</strong></td>
+          <td>C20</td>
+          <td>25 min</td>
+        </tr>
+
+        <tr class="">
+          <td>15:25–16:10</td>
+          <td><strong>L3</strong></td>
+          <td>C61</td>
+          <td>45 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L0</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B8</span>
+      <span class="pill">7 events • 2.92 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L3</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>10:40–11:10</td>
+          <td><strong>L2</strong></td>
+          <td>C21</td>
+          <td>30 min</td>
+        </tr>
+
+        <tr class="">
+          <td>12:10–12:40</td>
+          <td><strong>L2</strong></td>
+          <td>C40</td>
+          <td>30 min</td>
+        </tr>
+
+        <tr class="">
+          <td>12:50–13:50</td>
+          <td><strong>L2</strong></td>
+          <td>C23</td>
+          <td>60 min</td>
+        </tr>
+
+        <tr class="">
+          <td>14:50–15:20</td>
+          <td><strong>L2</strong></td>
+          <td>C52</td>
+          <td>30 min</td>
+        </tr>
+
+        <tr class="">
+          <td>15:25–15:50</td>
+          <td><strong>L2</strong></td>
+          <td>C48</td>
+          <td>25 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L3</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>B9</span>
+      <span class="pill">6 events • 3.67 hrs</span>
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Event</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="">
+          <td>09:00–09:00</td>
+          <td><strong>L3</strong></td>
+          <td>HOME_START</td>
+          <td>0 min</td>
+        </tr>
+
+        <tr class="">
+          <td>09:00–10:00</td>
+          <td><strong>L3</strong></td>
+          <td>C2</td>
+          <td>60 min</td>
+        </tr>
+
+        <tr class="">
+          <td>10:55–11:55</td>
+          <td><strong>L3</strong></td>
+          <td>C66</td>
+          <td>60 min</td>
+        </tr>
+
+        <tr class="">
+          <td>12:50–13:30</td>
+          <td><strong>L3</strong></td>
+          <td>C47</td>
+          <td>40 min</td>
+        </tr>
+
+        <tr class="">
+          <td>15:00–16:00</td>
+          <td><strong>L4</strong></td>
+          <td>C36</td>
+          <td>60 min</td>
+        </tr>
+
+        <tr class="">
+          <td>17:00–17:00</td>
+          <td><strong>L3</strong></td>
+          <td>HOME_END</td>
+          <td>0 min</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+</div></div></body></html>

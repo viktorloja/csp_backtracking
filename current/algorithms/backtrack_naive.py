@@ -102,7 +102,7 @@ def branch_and_bound_naive(
     case_costs,                # dict {(case_name, barrister_name): cost}
     domains,                   # dict {case_name: [barrister_names...]}            
     constraints,
-    time_limit_s=10,      
+    time_limit_s=300,      
     *,
     lambda_travel=1.0,
     unassigned_penalty=10000,
@@ -153,9 +153,9 @@ def branch_and_bound_naive(
         if timed_out():
             return
 
-        for cname in rem_cases:
+        for cname in sorted(rem_cases):
             case = cases_by_name[cname]
-            for bname in domains[cname]:
+            for bname in sorted(domains[cname]):
 
                 if timed_out():
                     return

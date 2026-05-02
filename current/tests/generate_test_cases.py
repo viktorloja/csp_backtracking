@@ -28,7 +28,7 @@ def make_symmetric_travel_times(
     base_minutes: int = 5,
     minutes_per_unit: int = 100,
     noise: float = 0.10,
-    seed: int = 0,
+    seed: int = 40,
 ) -> Dict[Tuple[str, str], int]:
     """
     Build a COMPLETE symmetric travel-time matrix in minutes.

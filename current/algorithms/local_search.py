@@ -14,7 +14,7 @@ UNASSIGNED = "UNASSIGNED"
 
 
 
-def local_search(barristers, cases, assignments, timelines, timelines_starts, case_costs, travel_times, current_score, time_limit_s = 10):
+def local_search(barristers, cases, assignments, timelines, timelines_starts, case_costs, travel_times, current_score, time_limit_s = 1000):
 
     start = time.monotonic()
     deadline = start + time_limit_s

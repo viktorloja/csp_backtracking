@@ -21,7 +21,7 @@ def main():
 
     parser.add_argument(
         "--load",
-        default=[0.4],
+        default=[0.4,0.3,0.2],
         help="The desired ratio of total case minutes / available barrister minutes, e.g. 0.4 = easy, 0.7 = moderate, 0.9 = hard, 1.1 = very hard",
     )
 
@@ -33,7 +33,7 @@ def main():
 
     parser.add_argument(
         "--constraint",
-        default=[0.7],
+        default=[0.7,0.5,0.3,...],
         help="Level of constrainedness, 0.0 is least, 1.0 is most",
     )
 

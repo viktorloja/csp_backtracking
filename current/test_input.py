@@ -39,8 +39,8 @@ def main():
 
     parser.add_argument(
         "--iterations",
-        default=3,
-        help="Number of iterations to run each test case on each algorithm",
+        default=10,
+        help="Number of random scenarios to generate for each set of parameters",
     )
 
     parser.add_argument(
@@ -73,8 +73,8 @@ def main():
     results = {}
     costs = {}
     for solver in solvers:
-        results[solver] = []
-        costs[solver] = []
+        results[solver] = {}
+        costs[solver] = {}
 
     plots_dir = Path(args.output + "/plots")
     plots_dir.mkdir(parents=True, exist_ok=True)
@@ -84,14 +84,17 @@ def main():
 
     for i in range(length):
 
-        barristers, cases, travel_times = generate_test_case(args.barristers[i], args.locations[i], args.constraint[i], args.load[i], args.phase[i])
-
         for solver in solvers:
-            print("Running solver: "+solver)
-            runtimes = []
-            scores = []
+            results[solver][i] = []
+            costs[solver][i] = []
 
-            for j in range(num_iterations):
+        for j in range(num_iterations):
+
+            barristers, cases, travel_times = generate_test_case(args.barristers[i], args.locations[i], args.constraint[i], args.load[i], args.phase[i])
+
+            for solver in solvers:
+                print("Running solver: "+solver)
+                
                 result = generate_schedule(
                     method=solver,
                     barristers=barristers,
@@ -119,11 +122,8 @@ def main():
 
                 #print("HTML "+solver+"-schedule written to: "+html_path)
                 
-                runtimes.append(result["runtime"])
-                scores.append(result["score"])
-
-            results[solver].append(runtimes)
-            costs[solver].append(scores)
+                results[solver][i].append(result["runtime"])
+                costs[solver][i].append(result["score"])
 
         #file_name = "plot-"+str(i)+".png"
         #file_path = plots_dir / file_name
